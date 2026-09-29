@@ -715,7 +715,7 @@ const DEFAULT = {
     {name:'Firebolt', bonus:'+6', notes:'Pistol, Fire · 120 ft', dmg:[{l:'Fire',f:'2d10+1d8'}]},
     {name:'+1 Dagger', bonus:'+6', notes:'On kill, d6; if 6, d4 HP', dmg:[{l:'Piercing',f:'1d4+3'}]},
     {name:'Arcane Firearm', bonus:'', notes:'Spell focus · add to damage spells', dmg:[{l:'Add to spell',f:'1d8'}]},
-    {name:'Force Ballista', bonus:'+5', notes:'Pushed 5′', dmg:[{l:'Force',f:'2d8'}]},
+    {name:'Force Ballista', bonus:'spell', notes:'Cannon’s ranged spell attack · pushes 5′', dmg:[{l:'Force',f:'2d8'}]},
     {name:'Green Flame Blade', bonus:'+6', notes:'5′ jump, fire damage', dmg:[{l:'Extra fire',f:'1d8'},{l:'Jump target',f:'1d8+3'}]},
     {name:'Booming Blade', bonus:'+6', notes:'2d8 thunder if it moves', dmg:[{l:'On hit',f:'1d8'},{l:'If it moves',f:'2d8'}]}
   ],
@@ -772,10 +772,10 @@ const DEFAULT = {
       {n:'Horse-Handling',t:'Skill: 9.'}
     ],
     infusions:[
-      {n:'Armor of Tools',t:'+Int to ability checks with integrated tools (PB + Int + Int).',star:true},
-      {n:'Enhanced Defense',t:'+1 AC on shield / armor.',star:true},
-      {n:'Enhanced Arcane Focus',t:'+1 spell attack, ignore half cover.'},
-      {n:'Enhanced Weapon',t:'+1 to attack and damage.'}
+      {n:'Armor of Tools',t:'+Int to ability checks with integrated tools (PB + Int + Int).',on:true},
+      {n:'Enhanced Defense',t:'+1 AC on shield / armor.',on:true},
+      {n:'Enhanced Arcane Focus',t:'+1 spell attack, ignore half cover.',on:false},
+      {n:'Enhanced Weapon',t:'+1 to attack and damage.',on:false}
     ],
     feats:[
       {n:'Alert',t:'Add PB to Initiative; can swap Initiative with an ally.'},
@@ -820,7 +820,10 @@ function readLocal(){ try{ const t = localStorage.getItem(KEY); return t ? JSON.
 function load(){
   const e = readEmbedded(), l = readLocal();
   const pick = e && l ? ((l.savedAt||0) >= (e.savedAt||0) ? l : e) : (l || e);
-  return pick ? merge(clone(DEFAULT), pick) : clone(DEFAULT);
+  const st = pick ? merge(clone(DEFAULT), pick) : clone(DEFAULT);
+  st.features.infusions.forEach(f => { if(f.on === undefined) f.on = !!f.star; delete f.star; });
+  st.attacks.forEach(a => { if(/ballista/i.test(a.name) && String(a.bonus).trim() === '+5') a.bonus = 'spell'; });
+  return st;
 }
 let S = load();
 let crit = {};        // attack index -> last roll was a natural 20
@@ -854,7 +857,12 @@ const spDC   = () => 8 + mod('int') + pb() + num(S.spellBonus);
 const resMax = r => r.max === 'pb' ? pb() : num(r.max);
 const hdLeft = () => Math.max(0, num(S.hd.max) - num(S.hd.spent));
 const gpTotal = () => { const c = S.coins; return Math.round((num(c.cp)/100 + num(c.sp)/10 + num(c.ep)/2 + num(c.gp) + num(c.pp)*10) * 100) / 100; };
-const ballistaBonus = () => (S.attacks.find(a => /ballista/i.test(a.name)) || {bonus:'+' + spAtk()}).bonus || fmt(spAtk());
+const infMax = () => { const l = num(S.level); return l >= 18 ? 6 : l >= 14 ? 5 : l >= 10 ? 4 : l >= 6 ? 3 : 2; };
+const infActive = () => S.features.infusions.filter(f => f.on).length;
+const atkNum = a => { const b = String(a.bonus).trim().toLowerCase(); if(b === 'spell') return spAtk(); return /^[+−-]?\d+$/.test(b) ? num(b.replace('−', '-')) : null; };
+const atkLabel = a => { const n = atkNum(a); return n === null ? (a.bonus || '—') : fmt(n); };
+const ballista = () => S.attacks.find(a => /ballista/i.test(a.name)) || {bonus:'spell'};
+const ballistaBonus = () => atkLabel(ballista());
 
 function calc(key){
   const [t, k] = key.split(':');
@@ -872,6 +880,8 @@ function calc(key){
     case 'hdMax': return `/ ${num(S.hd.max)}d${S.hd.die}`;
     case 'gpTotal': return gpTotal();
     case 'ballistaBonus': return ballistaBonus();
+    case 'atk': return atkLabel(S.attacks[k]);
+    case 'infcount': return `${infActive()} / ${infMax()} active`;
     case 'tool': { const T = S.tools[k]; return fmt(mod(T.a) + (T.p ? pb() : 0) + (T.i ? mod('int') : 0)); }
   }
   return '';
@@ -1030,15 +1040,14 @@ function renderDeath(){
 }
 function renderAttacks(){
   $('#attacks').innerHTML = S.attacks.map((a, i) => {
-    const hasB = String(a.bonus).trim() !== '';
-    const isPlain = /^[+−-]?\d+$/.test(String(a.bonus).trim());
+    const n = atkNum(a);
     return `
     <div class="atk">
       <div class="pl"><div class="an">${esc(a.name)}</div><div class="note">${esc(a.notes)}</div></div>
-      <div class="pl hit">${hasB && isPlain ? `<button class="roll big" data-atk="${i}" title="Roll to hit">${esc(a.bonus.toString().replace('-', '−'))}</button>` : `<span class="muted">${esc(a.bonus) || '—'}</span>`}</div>
+      <div class="pl hit">${n !== null ? `<button class="roll big" data-atk="${i}" data-c="atk:${i}" title="Roll to hit">${fmt(n)}</button>` : `<span class="muted">${esc(a.bonus) || '—'}</span>`}</div>
       <div class="pl dm">${a.dmg.map((d, j) => `<button class="roll dice" data-dmg="${i}.${j}" title="Roll damage"><small>${esc(d.l)}</small>${esc(d.f.replace(/\+/g, ' + ').replace(/-/g, ' − ').replace(/  +/g, ' ').trim())}</button>`).join('')}</div>
       <div class="ed" style="grid-column:1/-1">
-        <div class="edrow"><input data-f="attacks.${i}.name" value="${esc(a.name)}" placeholder="Name" aria-label="Attack name"><input class="n" data-f="attacks.${i}.bonus" value="${esc(a.bonus)}" placeholder="+0" aria-label="Attack bonus"><button class="x" data-del="attacks.${i}" aria-label="Delete attack">×</button></div>
+        <div class="edrow"><input data-f="attacks.${i}.name" value="${esc(a.name)}" placeholder="Name" aria-label="Attack name"><input class="n" data-f="attacks.${i}.bonus" value="${esc(a.bonus)}" placeholder="+0 or spell" title="A number, or “spell” to use your spell attack bonus" aria-label="Attack bonus"><button class="x" data-del="attacks.${i}" aria-label="Delete attack">×</button></div>
         <div class="edrow" style="margin-top:4px"><input data-f="attacks.${i}.notes" value="${esc(a.notes)}" placeholder="Notes" aria-label="Notes"></div>
         ${a.dmg.map((d, j) => `<div class="edrow" style="margin-top:4px"><input data-f="attacks.${i}.dmg.${j}.l" value="${esc(d.l)}" placeholder="Label"><input data-f="attacks.${i}.dmg.${j}.f" value="${esc(d.f)}" placeholder="2d6+3  (int, con, pb ok)"><button class="x" data-del="attacks.${i}.dmg.${j}" aria-label="Remove damage">×</button></div>`).join('')}
         <button class="btn sm" style="margin-top:6px" data-add="attacks.${i}.dmg">+ damage roll</button>
@@ -1129,10 +1138,10 @@ function renderSpells(){
 function renderFeatures(){
   const sections = [['species','Species Traits'],['cls','Class Features'],['infusions','Infusions'],['feats','Feats']];
   $('#featGrid').innerHTML = sections.map(([k, title]) => `
-    <div class="panel"><h2>${title}</h2>
+    <div class="panel"><h2>${title}${k === 'infusions' ? '<span class="r muted" style="font-family:var(--type);font-size:13px;letter-spacing:.03em;font-variant:normal;text-transform:none" data-c="infcount"></span>' : ''}</h2>
       <div class="feats">${S.features[k].map((f, i) => `
         <div class="ft">
-          <div class="pl"><h4>${esc(f.n)}${f.star ? ' <span class="star" title="Marked ** on the original sheet">★</span>' : ''}</h4>${f.t ? `<p>${esc(f.t)}</p>` : ''}</div>
+          <div class="pl"><h4>${esc(f.n)}${k === 'infusions' ? ` <button class="chip good ${f.on ? 'on' : ''}" data-infuse="${i}" aria-pressed="${!!f.on}" style="margin-left:auto">${f.on ? 'Active' : 'Inactive'}</button>` : ''}</h4>${f.t ? `<p>${esc(f.t)}</p>` : ''}</div>
           <div class="ed"><div class="edrow"><input data-f="features.${k}.${i}.n" value="${esc(f.n)}" aria-label="Feature name"><button class="x" data-del="features.${k}.${i}" aria-label="Delete">×</button></div><textarea data-f="features.${k}.${i}.t" rows="2" style="width:100%;margin-top:4px" aria-label="Description">${esc(f.t)}</textarea></div>
         </div>`).join('')}</div>
       <div class="addrow ed"><button class="btn sm" data-addfeat="${k}">+ Add</button></div>
@@ -1241,18 +1250,23 @@ document.addEventListener('click', e => {
   if(t.id === 'logClear'){ LOG = []; try{ sessionStorage.removeItem('nyx-log'); }catch{} renderLog(); return; }
   if(t.id === 'btnMenu'){ $('#themeName').textContent = S.ui.theme; $('#menu').showModal(); return; }
 
-  if(d.atk !== undefined){ const a = S.attacks[d.atk]; d20(a.name + ' — attack', num(String(a.bonus).replace('−','-')), 'attack', num(d.atk)); return; }
-  if(d.dmg){ const [i, j] = d.dmg.split('.').map(Number); const a = S.attacks[i]; dmgRoll(`${a.name} — ${a.dmg[j].l}`, a.dmg[j].f, /^[+−-]?\d+$/.test(String(a.bonus).trim()) ? i : null); return; }
+  if(d.atk !== undefined){ const a = S.attacks[d.atk]; d20(a.name + ' — attack', atkNum(a), 'attack', num(d.atk)); return; }
+  if(d.dmg){ const [i, j] = d.dmg.split('.').map(Number); const a = S.attacks[i]; dmgRoll(`${a.name} — ${a.dmg[j].l}`, a.dmg[j].f, atkNum(a) !== null ? i : null); return; }
   if(d.cannonRoll){
     const k = d.cannonRoll;
     if(k === 'flame') dmgRoll(`Flamethrower (DC ${spDC()} Dex)`, '2d8');
-    else if(k === 'ballista-atk') d20('Force Ballista — attack', num(ballistaBonus().replace('−','-')), 'attack');
+    else if(k === 'ballista-atk') d20('Force Ballista — attack', atkNum(ballista()), 'attack');
     else if(k === 'ballista-dmg') dmgRoll('Force Ballista — force', '2d8');
     else if(k === 'protect') dmgRoll('Protector — temp HP', '1d8+int');
     return;
   }
   if(d.cannon){ S.cannon.hp = Math.min(num(S.cannon.max), Math.max(0, num(S.cannon.hp) + num(d.cannon))); bindAll(); save(); return; }
   if(d.res){ const [i, k] = d.res.split('.').map(Number); const r = S.res[i]; const left = Math.max(0, resMax(r) - num(r.used)); r.used = k < left ? resMax(r) - k : resMax(r) - k - 1; r.used = Math.max(0, Math.min(resMax(r), r.used)); renderResources(); save(); return; }
+  if(d.infuse !== undefined){
+    const f = S.features.infusions[d.infuse];
+    if(!f.on && infActive() >= infMax()){ say(`Only ${infMax()} infusions can be active at once`, 'Turn one off first.'); return; }
+    f.on = !f.on; renderFeatures(); refresh(); save(); return;
+  }
   if(d.cond){ S.conds[d.cond] = !S.conds[d.cond]; renderConds(); save(); return; }
   if(d.exh){ S.exh = Math.max(0, Math.min(6, S.exh + num(d.exh))); refresh(); save(); return; }
   if(t.id === 'concEnd'){ S.conc = ''; bindAll(); save(); return; }
