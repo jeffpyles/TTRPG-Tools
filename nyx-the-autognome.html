@@ -594,7 +594,7 @@ dialog p{margin:8px 0 0;color:var(--muted);font-size:14px}
         <h2>Tool Proficiencies</h2>
         <div id="tools"></div>
         <div class="addrow ed"><button class="btn sm" id="addTool">+ Add tool</button></div>
-        <p class="hint" style="margin:8px 0 0">Armor of Tools: add Int again to checks with an integrated tool (PB + Int + Int).</p>
+        <p class="hint" style="margin:8px 0 0">Tool Expertise (level 6) doubles PB on proficient tools. Armor of Tools: add Int again with an integrated tool.</p>
       </div>
       <div class="panel">
         <h2>Training</h2>
@@ -702,13 +702,13 @@ const SKILL_ABIL = {}; Object.entries(SKILLS).forEach(([a, l]) => l.forEach(([k,
 const CONDITIONS = ['Blinded','Charmed','Deafened','Frightened','Grappled','Incapacitated','Invisible','Paralyzed','Petrified','Poisoned','Prone','Restrained','Stunned','Unconscious'];
 
 const DEFAULT = {
-  v:1, savedAt:0,
-  name:'Nyx', level:5, xp:'', cls:'Artificer', subclass:'Artillerist', species:'Autognome', background:'Criminal', alignment:'Neutral',
+  v:2, savedAt:0,
+  name:'Nyx', level:6, xp:'', cls:'Artificer', subclass:'Artillerist', species:'Autognome', background:'Criminal', alignment:'Neutral',
   abil:{str:12,dex:14,con:14,int:16,wis:12,cha:8},
   prof:{'save:int':1,'save:con':1,'skill:arcana':1,'skill:investigation':1,'skill:sleight':1,'skill:stealth':1},
   alert:true, speed:'30', size:'S',
   ac:{base:19, note:'Scale Mail 14 + Dex 2 + Shield 2 + Enhanced Defense 1'},
-  hp:{cur:39,max:39,temp:0}, hd:{max:5,spent:0,die:8}, death:{s:0,f:0}, insp:false,
+  hp:{cur:46,max:46,temp:0}, hd:{max:6,spent:0,die:8}, death:{s:0,f:0}, insp:false,
   fx:{shield:false}, conds:{}, exh:0, conc:'', spellBonus:0,
   ui:{mode:0,bfs:false,tab:'combat',theme:'auto'},
   attacks:[
@@ -768,11 +768,13 @@ const DEFAULT = {
       {n:'Protector',t:"It and everyone I choose within 10′ gain 1d8 + Int temp HP."},
       {n:'Homebrew: Observer Drone',t:'No combat abilities.'},
       {n:'Arms',t:'Torch; Grappling Hook schematic.'},
+      {n:'Tool Expertise',t:'Level 6: proficiency bonus is doubled on ability checks that use a tool you are proficient with.'},
+      {n:'Expanded Replication',t:'Level 6: can learn plans from the Artificer level 6+ Magic Item Plans list.'},
       {n:'Spell Scrolls',t:'Can craft spell scrolls with Arcana.'},
       {n:'Horse-Handling',t:'Skill: 9.'}
     ],
     infusions:[
-      {n:'Armor of Tools',t:'+Int to ability checks with integrated tools (PB + Int + Int).',on:true},
+      {n:'Armor of Tools',t:'+Int to ability checks with integrated tools.',on:true},
       {n:'Enhanced Defense',t:'+1 AC on shield / armor.',on:true},
       {n:'Enhanced Arcane Focus',t:'+1 spell attack, ignore half cover.',on:false},
       {n:'Enhanced Weapon',t:'+1 to attack and damage.',on:false}
@@ -821,6 +823,16 @@ function load(){
   const e = readEmbedded(), l = readLocal();
   const pick = e && l ? ((l.savedAt||0) >= (e.savedAt||0) ? l : e) : (l || e);
   const st = pick ? merge(clone(DEFAULT), pick) : clone(DEFAULT);
+  if(pick && (pick.v || 1) < 2){           // upgrade a saved level-5 sheet to level 6
+    if(num(st.level) === 5){
+      st.level = 6; st.hp.max = num(st.hp.max) + 7; st.hp.cur = num(st.hp.cur) + 7; st.hd.max = num(st.hd.max) + 1;
+      if(!st.features.cls.some(f => f.n === 'Tool Expertise')){
+        const i = Math.max(0, st.features.cls.findIndex(f => f.n === 'Spell Scrolls'));
+        st.features.cls.splice(i, 0, ...clone(DEFAULT.features.cls.filter(f => /^(Tool Expertise|Expanded Replication)$/.test(f.n))));
+      }
+    }
+    st.v = 2;
+  }
   st.features.infusions.forEach(f => { if(f.on === undefined) f.on = !!f.star; delete f.star; });
   st.attacks.forEach(a => { if(/ballista/i.test(a.name) && String(a.bonus).trim() === '+5') a.bonus = 'spell'; });
   return st;
@@ -882,7 +894,7 @@ function calc(key){
     case 'ballistaBonus': return ballistaBonus();
     case 'atk': return atkLabel(S.attacks[k]);
     case 'infcount': return `${infActive()} / ${infMax()} active`;
-    case 'tool': { const T = S.tools[k]; return fmt(mod(T.a) + (T.p ? pb() : 0) + (T.i ? mod('int') : 0)); }
+    case 'tool': { const T = S.tools[k]; return fmt(mod(T.a) + (T.p ? pb() * (num(S.level) >= 6 ? 2 : 1) : 0) + (T.i ? mod('int') : 0)); }
   }
   return '';
 }
