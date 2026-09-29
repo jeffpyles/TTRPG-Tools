@@ -567,9 +567,12 @@ dialog p{margin:8px 0 0;color:var(--muted);font-size:14px}
           <div class="sst"><div class="lbl">Modifier</div><div class="v" data-c="mod:int">+3</div></div>
           <div class="sst"><div class="lbl">Spell Save DC</div><div class="v" data-c="dc">14</div></div>
           <div class="sst"><div class="lbl">Spell Attack</div><button class="roll big" data-roll="spatk" data-c="spatk">+6</button></div>
-          <div class="sst"><div class="lbl">Extra bonus</div><input class="v" type="number" data-f="spellBonus" style="width:100%;text-align:center;border:0;font-size:26px" title="Added to DC and attack (e.g. +2 All-Purpose Tool)"></div>
+          <div class="sst"><div class="lbl">Other bonus</div><input class="v" type="number" data-f="spellBonus" style="width:100%;text-align:center;border:0;font-size:26px" title="Any other bonus to both DC and attack"></div>
         </div>
-        <p class="hint" style="margin:8px 0 0">Extra bonus is added to both DC and attack — use 2 while the +2 All-Purpose Tool is in hand.</p>
+        <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:center;margin-top:10px">
+          <label class="toggle"><input type="checkbox" data-f="apt"><span class="sw"></span><span>+2 All-Purpose Tool (attack &amp; DC)</span></label>
+          <span class="hint" style="margin:0">Wand of the War Mage adds +1 to spell attacks (not DC) while created — it shows in the attack number above.</span>
+        </div>
       </div>
 
       <div class="panel">
@@ -594,7 +597,7 @@ dialog p{margin:8px 0 0;color:var(--muted);font-size:14px}
         <h2>Tool Proficiencies</h2>
         <div id="tools"></div>
         <div class="addrow ed"><button class="btn sm" id="addTool">+ Add tool</button></div>
-        <p class="hint" style="margin:8px 0 0">Armor of Tools: add Int again to checks with an integrated tool (PB + Int + Int).</p>
+        <p class="hint" style="margin:8px 0 0">Tool Expertise (level 6) doubles your proficiency bonus on proficient tools.</p>
       </div>
       <div class="panel">
         <h2>Training</h2>
@@ -702,20 +705,20 @@ const SKILL_ABIL = {}; Object.entries(SKILLS).forEach(([a, l]) => l.forEach(([k,
 const CONDITIONS = ['Blinded','Charmed','Deafened','Frightened','Grappled','Incapacitated','Invisible','Paralyzed','Petrified','Poisoned','Prone','Restrained','Stunned','Unconscious'];
 
 const DEFAULT = {
-  v:1, savedAt:0,
-  name:'Nyx', level:5, xp:'', cls:'Artificer', subclass:'Artillerist', species:'Autognome', background:'Criminal', alignment:'Neutral',
+  v:3, savedAt:0,
+  name:'Nyx', level:7, xp:'', cls:'Artificer', subclass:'Artillerist', species:'Autognome', background:'Criminal', alignment:'Neutral',
   abil:{str:12,dex:14,con:14,int:16,wis:12,cha:8},
   prof:{'save:int':1,'save:con':1,'skill:arcana':1,'skill:investigation':1,'skill:sleight':1,'skill:stealth':1},
-  alert:true, speed:'30', size:'S',
-  ac:{base:19, note:'Scale Mail 14 + Dex 2 + Shield 2 + Enhanced Defense 1'},
-  hp:{cur:39,max:39,temp:0}, hd:{max:5,spent:0,die:8}, death:{s:0,f:0}, insp:false,
+  alert:true, apt:true, speed:'30', size:'S', infCap:'',
+  ac:{base:19, note:'Scale Mail 14 + Dex 2 + Shield 2 + Armor/Shield +1: 1'},
+  hp:{cur:53,max:53,temp:0}, hd:{max:7,spent:0,die:8}, death:{s:0,f:0}, insp:false,
   fx:{shield:false}, conds:{}, exh:0, conc:'', spellBonus:0,
   ui:{mode:0,bfs:false,tab:'combat',theme:'auto'},
   attacks:[
-    {name:'Firebolt', bonus:'+6', notes:'Pistol, Fire · 120 ft', dmg:[{l:'Fire',f:'2d10+1d8'}]},
+    {name:'Firebolt', bonus:'cast', notes:'Pistol, Fire · 120 ft', dmg:[{l:'Fire',f:'2d10+1d8'}]},
     {name:'+1 Dagger', bonus:'+6', notes:'On kill, d6; if 6, d4 HP', dmg:[{l:'Piercing',f:'1d4+3'}]},
     {name:'Arcane Firearm', bonus:'', notes:'Spell focus · add to damage spells', dmg:[{l:'Add to spell',f:'1d8'}]},
-    {name:'Force Ballista', bonus:'+5', notes:'Pushed 5′', dmg:[{l:'Force',f:'2d8'}]},
+    {name:'Force Ballista', bonus:'spell', notes:'Cannon’s ranged spell attack · pushes 5′', dmg:[{l:'Force',f:'2d8'}]},
     {name:'Green Flame Blade', bonus:'+6', notes:'5′ jump, fire damage', dmg:[{l:'Extra fire',f:'1d8'},{l:'Jump target',f:'1d8+3'}]},
     {name:'Booming Blade', bonus:'+6', notes:'2d8 thunder if it moves', dmg:[{l:'On hit',f:'1d8'},{l:'If it moves',f:'2d8'}]}
   ],
@@ -724,10 +727,11 @@ const DEFAULT = {
     {id:'bfs', name:'Built for Success', max:'pb', used:0, reset:'long', note:'+1d4 to an attack roll, check or save. Uses = proficiency bonus.'},
     {id:'recall', name:'Branch Recall', max:1, used:0, reset:'long', note:'A failed Int or Wis save can be treated as a success.'},
     {id:'apt', name:'All-Purpose Tool cantrip', max:1, used:0, reset:'long', note:'Any spell list · lasts 8 hours.'},
+    {id:'flash', name:'Flash of Genius', max:'int', used:0, reset:'long', note:'Reaction: add Int modifier to a check or save by you or a creature within 30 ft.'},
     {id:'cannon', name:'Eldritch Cannon (free cast)', max:1, used:0, reset:'long', note:'Otherwise costs a spell slot.'}
   ],
   defensesText:'Resistance: poison damage\nImmune: disease\nAdvantage on saves vs. poison & paralysis\nDarkvision\nNo need to eat, drink or breathe',
-  slots:{1:{t:4,u:0},2:{t:2,u:0},3:{t:0,u:0},4:{t:0,u:0},5:{t:0,u:0},6:{t:0,u:0},7:{t:0,u:0},8:{t:0,u:0},9:{t:0,u:0}},
+  slots:{1:{t:4,u:0},2:{t:3,u:0},3:{t:0,u:0},4:{t:0,u:0},5:{t:0,u:0},6:{t:0,u:0},7:{t:0,u:0},8:{t:0,u:0},9:{t:0,u:0}},
   spellGroups:[
     {name:'Cantrips', spells:[
       {lvl:0,name:'Mending',time:'1m',range:'Touch',notes:'1d8 + Con HP (Healing Machine)',dice:'1d8+con',atk:false},
@@ -735,12 +739,14 @@ const DEFAULT = {
       {lvl:0,name:'Green Flame Blade',time:'A',range:'Self (5′)',notes:''},
       {lvl:0,name:'Booming Blade',time:'A',range:'Self (5′)',notes:''}
     ]},
-    {name:'Prepared (5)', spells:[
+    {name:'Prepared (7)', spells:[
       {lvl:1,name:'Cure Wounds',time:'A',range:'Touch',notes:'2d8 + Int, +2d8 per slot level',dice:'2d8+int'},
       {lvl:1,name:'Feather Fall',time:'R',range:"60′",notes:'5 creatures, 1 minute'},
       {lvl:1,name:'Detect Magic',time:'A',range:"Self (30′)",notes:'10 minutes',c:true,r:true},
       {lvl:1,name:'Identify',time:'1m',range:'Touch',notes:'',r:true,m:true},
-      {lvl:2,name:'Alter Self',time:'A',range:'Self',notes:'1 hour',c:true}
+      {lvl:2,name:'Alter Self',time:'A',range:'Self',notes:'1 hour',c:true},
+      {lvl:2,name:'Arcane Lock',time:'A',range:'Touch',notes:'Until dispelled · 25 gp gold dust',m:true},
+      {lvl:2,name:'Web',time:'A',range:"60′",notes:"20′ cube, Dex save · 1 hour",c:true}
     ]},
     {name:'Artificer Spells', spells:[
       {lvl:1,name:'Shield',time:'R',range:'Self',notes:'+5 AC, 1 turn',fx:'shield'},
@@ -768,14 +774,18 @@ const DEFAULT = {
       {n:'Protector',t:"It and everyone I choose within 10′ gain 1d8 + Int temp HP."},
       {n:'Homebrew: Observer Drone',t:'No combat abilities.'},
       {n:'Arms',t:'Torch; Grappling Hook schematic.'},
+      {n:'Flash of Genius',t:'Level 7: reaction to add your Int modifier to an ability check or saving throw made by you or a creature within 30 feet. Uses = Int modifier per long rest.'},
+      {n:'Tool Expertise',t:'Level 6: proficiency bonus is doubled on ability checks that use a tool you are proficient with.'},
+      {n:'Expanded Replication',t:'Level 6: can learn plans from the Artificer level 6+ Magic Item Plans list.'},
       {n:'Spell Scrolls',t:'Can craft spell scrolls with Arcana.'},
       {n:'Horse-Handling',t:'Skill: 9.'}
     ],
     infusions:[
-      {n:'Armor of Tools',t:'+Int to ability checks with integrated tools (PB + Int + Int).',star:true},
-      {n:'Enhanced Defense',t:'+1 AC on shield / armor.',star:true},
-      {n:'Enhanced Arcane Focus',t:'+1 spell attack, ignore half cover.'},
-      {n:'Enhanced Weapon',t:'+1 to attack and damage.'}
+      {id:'armor',n:'Armor +1 / Shield +1',t:'+1 AC on the armor or shield it is made from.',on:true},
+      {id:'weapon',n:'Weapon +1',t:'+1 to attack and damage rolls with the weapon.',on:false},
+      {id:'wand',n:'Wand of the War Mage +1',t:'+1 to spell attack rolls (added to Spell Attack and Firebolt while created); ignore half cover. Requires attunement. Can double as the Arcane Firearm.',on:true},
+      {id:'gloves',n:'Gloves of Thievery',t:'Invisible while worn. +5 to Dexterity (Sleight of Hand) checks and to Dexterity checks with thieves’ tools (already added to the Skills tab).',on:false},
+      {id:'cloak',n:'Cloak of Elvenkind',t:'Advantage on Stealth checks; creatures have disadvantage on sight-based Perception checks to spot you while the hood is up. Requires attunement.',on:false}
     ],
     feats:[
       {n:'Alert',t:'Add PB to Initiative; can swap Initiative with an ally.'},
@@ -820,7 +830,52 @@ function readLocal(){ try{ const t = localStorage.getItem(KEY); return t ? JSON.
 function load(){
   const e = readEmbedded(), l = readLocal();
   const pick = e && l ? ((l.savedAt||0) >= (e.savedAt||0) ? l : e) : (l || e);
-  return pick ? merge(clone(DEFAULT), pick) : clone(DEFAULT);
+  const st = pick ? merge(clone(DEFAULT), pick) : clone(DEFAULT);
+  if(pick && (pick.v || 1) < 2){           // upgrade a saved level-5 sheet to level 6
+    if(num(st.level) === 5){
+      st.level = 6; st.hp.max = num(st.hp.max) + 7; st.hp.cur = num(st.hp.cur) + 7; st.hd.max = num(st.hd.max) + 1;
+      if(!st.features.cls.some(f => f.n === 'Tool Expertise')){
+        const i = Math.max(0, st.features.cls.findIndex(f => f.n === 'Spell Scrolls'));
+        st.features.cls.splice(i, 0, ...clone(DEFAULT.features.cls.filter(f => /^(Tool Expertise|Expanded Replication)$/.test(f.n))));
+      }
+    }
+    st.v = 2;
+  }
+  if((pick && (pick.v || 1) < 3) && num(st.level) === 6){   // level 6 -> 7
+    st.level = 7; st.hp.max = num(st.hp.max) + 7; st.hp.cur = num(st.hp.cur) + 7; st.hd.max = num(st.hd.max) + 1;
+    st.slots[2].t = Math.max(3, num(st.slots[2].t));
+    if(!st.res.some(r => r.id === 'flash')){
+      const i = Math.max(0, st.res.findIndex(r => r.id === 'cannon'));
+      st.res.splice(i, 0, clone(DEFAULT.res.find(r => r.id === 'flash')));
+    }
+    if(!st.features.cls.some(f => f.n === 'Flash of Genius')){
+      const i = Math.max(0, st.features.cls.findIndex(f => f.n === 'Tool Expertise'));
+      st.features.cls.splice(i, 0, clone(DEFAULT.features.cls.find(f => f.n === 'Flash of Genius')));
+    }
+  }
+  if(pick) st.v = 3;
+  if(pick && num(pick.spellBonus) === 2 && pick.apt === undefined){ st.spellBonus = 0; st.apt = true; }   // manual +2 -> toggle
+  st.attacks.forEach(a => { if(a.name === 'Firebolt' && String(a.bonus).trim() === 'spell') a.bonus = 'cast'; });
+  // 5e infusions -> 2024 replicated-item plans
+  if(st.features.infusions.some(f => /^(Armor of Tools|Enhanced )/.test(f.n))){
+    const was = n => !!st.features.infusions.find(f => f.n === n && f.on);
+    const next = clone(DEFAULT.features.infusions);
+    next.find(f => f.id === 'armor').on = was('Enhanced Defense');
+    next.find(f => f.id === 'weapon').on = was('Enhanced Weapon');
+    next.find(f => f.id === 'wand').on = was('Enhanced Arcane Focus');
+    st.features.infusions = next;
+    st.ac.note = String(st.ac.note || '').replace('Enhanced Defense 1', 'Armor/Shield +1: 1');
+  }
+  st.attacks.forEach(a => { if(a.name === 'Firebolt' && String(a.bonus).trim() === '+6') a.bonus = 'cast'; });
+  const prep = st.spellGroups.find(g => /^Prepared/.test(g.name));
+  if(prep){
+    if(!prep.spells.some(x => x.name === 'Arcane Lock')) prep.spells.push(clone(DEFAULT.spellGroups[1].spells.find(x => x.name === 'Arcane Lock')));
+    if(!prep.spells.some(x => x.name === 'Web')) prep.spells.push(clone(DEFAULT.spellGroups[1].spells.find(x => x.name === 'Web')));
+    if(prep.name === 'Prepared (5)' || prep.name === 'Prepared (5 of 7)') prep.name = 'Prepared (7)';
+  }
+  st.features.infusions.forEach(f => { if(f.on === undefined) f.on = !!f.star; delete f.star; });
+  st.attacks.forEach(a => { if(/ballista/i.test(a.name) && String(a.bonus).trim() === '+5') a.bonus = 'spell'; });
+  return st;
 }
 let S = load();
 let crit = {};        // attack index -> last roll was a natural 20
@@ -845,16 +900,26 @@ const pb   = () => Math.ceil(Math.max(1, num(S.level)) / 4) + 1;
 const mod  = a => Math.floor((num(S.abil[a]) - 10) / 2);
 const profOf = key => (S.prof[key] || 0) * pb();
 const saveB  = a => mod(a) + profOf('save:' + a);
-const skillB = k => mod(SKILL_ABIL[k][0]) + profOf('skill:' + k);
+const skillB = k => mod(SKILL_ABIL[k][0]) + profOf('skill:' + k) + (k === 'sleight' ? glovesB() : 0);
 const initB  = () => mod('dex') + (S.alert ? pb() : 0);
 const ppV    = () => 10 + skillB('perception');
 const acV    = () => num(S.ac.base) + (S.fx.shield ? 5 : 0);
-const spAtk  = () => mod('int') + pb() + num(S.spellBonus);
-const spDC   = () => 8 + mod('int') + pb() + num(S.spellBonus);
-const resMax = r => r.max === 'pb' ? pb() : num(r.max);
+const itemOn = id => S.features.infusions.some(f => f.id === id && f.on);
+const aptB   = () => S.apt ? 2 : 0;                                        // +2 All-Purpose Tool: spell attacks & DC
+const spAtk  = () => mod('int') + pb() + aptB() + num(S.spellBonus);        // spell attack modifier (also the cannon's)
+const spAtkCast = () => spAtk() + (itemOn('wand') ? 1 : 0);                 // spells you cast: Wand of the War Mage +1
+const spDC   = () => 8 + mod('int') + pb() + aptB() + num(S.spellBonus);
+const glovesB = () => itemOn('gloves') ? 5 : 0;                              // Gloves of Thievery: +5 Sleight of Hand & lockpicking
+const resMax = r => r.max === 'pb' ? pb() : r.max === 'int' ? Math.max(1, mod('int')) : num(r.max);
 const hdLeft = () => Math.max(0, num(S.hd.max) - num(S.hd.spent));
 const gpTotal = () => { const c = S.coins; return Math.round((num(c.cp)/100 + num(c.sp)/10 + num(c.ep)/2 + num(c.gp) + num(c.pp)*10) * 100) / 100; };
-const ballistaBonus = () => (S.attacks.find(a => /ballista/i.test(a.name)) || {bonus:'+' + spAtk()}).bonus || fmt(spAtk());
+const infMax = () => { if(num(S.infCap) > 0) return num(S.infCap); const l = num(S.level); return l >= 18 ? 6 : l >= 14 ? 5 : l >= 10 ? 4 : l >= 6 ? 3 : 2; };
+const infActive = () => S.features.infusions.filter(f => f.on).length;
+const atkNum = a => { const b = String(a.bonus).trim().toLowerCase(); if(b === 'spell') return spAtk();
+  if(b === 'cast') return spAtkCast(); return /^[+−-]?\d+$/.test(b) ? num(b.replace('−', '-')) : null; };
+const atkLabel = a => { const n = atkNum(a); return n === null ? (a.bonus || '—') : fmt(n); };
+const ballista = () => S.attacks.find(a => /ballista/i.test(a.name)) || {bonus:'spell'};
+const ballistaBonus = () => atkLabel(ballista());
 
 function calc(key){
   const [t, k] = key.split(':');
@@ -867,12 +932,14 @@ function calc(key){
     case 'pp': return ppV();
     case 'ac': return acV();
     case 'dc': return spDC();
-    case 'spatk': return fmt(spAtk());
+    case 'spatk': return fmt(spAtkCast());
     case 'hdLeft': return hdLeft();
     case 'hdMax': return `/ ${num(S.hd.max)}d${S.hd.die}`;
     case 'gpTotal': return gpTotal();
     case 'ballistaBonus': return ballistaBonus();
-    case 'tool': { const T = S.tools[k]; return fmt(mod(T.a) + (T.p ? pb() : 0) + (T.i ? mod('int') : 0)); }
+    case 'atk': return atkLabel(S.attacks[k]);
+    case 'infcount': return `${infActive()} / ${infMax()} created`;
+    case 'tool': { const T = S.tools[k]; return fmt(mod(T.a) + (T.p ? pb() * (num(S.level) >= 6 ? 2 : 1) : 0) + (T.i ? mod('int') : 0) + (/thieves/i.test(T.n) ? glovesB() : 0)); }
   }
   return '';
 }
@@ -961,7 +1028,7 @@ function rollKey(key){
   if(t === 'check') return d20(ABIL.find(a => a[0] === k)[1] + ' check', mod(k));
   if(t === 'save')  return d20(ABIL.find(a => a[0] === k)[1] + ' save', saveB(k), 'save');
   if(t === 'skill') return d20(SKILL_ABIL[k][1], skillB(k));
-  if(t === 'spatk') return d20('Spell attack', spAtk(), 'attack');
+  if(t === 'spatk') return d20('Spell attack', spAtkCast(), 'attack');
   if(t === 'tool'){ const T = S.tools[k]; if(T.b) say(T.n + ' are broken', 'Repair them before using them.'); return d20(T.n, num(calc(key).replace('−','-'))); }
 }
 
@@ -990,7 +1057,7 @@ document.addEventListener('change', e => {
   if(el.hasAttribute('data-hp')){ clampHp(); bindAll(); }
   if(el.dataset.f === 'cannon.hp' || el.dataset.f === 'cannon.max'){ S.cannon.hp = Math.min(num(S.cannon.max), Math.max(0, num(S.cannon.hp))); bindAll(); }
   if(el.dataset.f === 'defensesText') renderDefenses();
-  if(/^(tools|items|attune|coins)/.test(el.dataset.f) || el.dataset.f === 'spellBonus') refresh();
+  if(el.dataset.f === 'apt' || el.dataset.f === 'spellBonus') renderSpells();
   refresh();
 });
 function changed(){ save(); refresh(); }
@@ -1030,15 +1097,14 @@ function renderDeath(){
 }
 function renderAttacks(){
   $('#attacks').innerHTML = S.attacks.map((a, i) => {
-    const hasB = String(a.bonus).trim() !== '';
-    const isPlain = /^[+−-]?\d+$/.test(String(a.bonus).trim());
+    const n = atkNum(a);
     return `
     <div class="atk">
       <div class="pl"><div class="an">${esc(a.name)}</div><div class="note">${esc(a.notes)}</div></div>
-      <div class="pl hit">${hasB && isPlain ? `<button class="roll big" data-atk="${i}" title="Roll to hit">${esc(a.bonus.toString().replace('-', '−'))}</button>` : `<span class="muted">${esc(a.bonus) || '—'}</span>`}</div>
+      <div class="pl hit">${n !== null ? `<button class="roll big" data-atk="${i}" data-c="atk:${i}" title="Roll to hit">${fmt(n)}</button>` : `<span class="muted">${esc(a.bonus) || '—'}</span>`}</div>
       <div class="pl dm">${a.dmg.map((d, j) => `<button class="roll dice" data-dmg="${i}.${j}" title="Roll damage"><small>${esc(d.l)}</small>${esc(d.f.replace(/\+/g, ' + ').replace(/-/g, ' − ').replace(/  +/g, ' ').trim())}</button>`).join('')}</div>
       <div class="ed" style="grid-column:1/-1">
-        <div class="edrow"><input data-f="attacks.${i}.name" value="${esc(a.name)}" placeholder="Name" aria-label="Attack name"><input class="n" data-f="attacks.${i}.bonus" value="${esc(a.bonus)}" placeholder="+0" aria-label="Attack bonus"><button class="x" data-del="attacks.${i}" aria-label="Delete attack">×</button></div>
+        <div class="edrow"><input data-f="attacks.${i}.name" value="${esc(a.name)}" placeholder="Name" aria-label="Attack name"><input class="n" data-f="attacks.${i}.bonus" value="${esc(a.bonus)}" placeholder="+0 or spell" title="A number, or “spell” to use your spell attack bonus" aria-label="Attack bonus"><button class="x" data-del="attacks.${i}" aria-label="Delete attack">×</button></div>
         <div class="edrow" style="margin-top:4px"><input data-f="attacks.${i}.notes" value="${esc(a.notes)}" placeholder="Notes" aria-label="Notes"></div>
         ${a.dmg.map((d, j) => `<div class="edrow" style="margin-top:4px"><input data-f="attacks.${i}.dmg.${j}.l" value="${esc(d.l)}" placeholder="Label"><input data-f="attacks.${i}.dmg.${j}.f" value="${esc(d.f)}" placeholder="2d6+3  (int, con, pb ok)"><button class="x" data-del="attacks.${i}.dmg.${j}" aria-label="Remove damage">×</button></div>`).join('')}
         <button class="btn sm" style="margin-top:6px" data-add="attacks.${i}.dmg">+ damage roll</button>
@@ -1053,7 +1119,7 @@ function renderResources(){
       <div class="pl rn">${esc(r.name)}</div>
       <div class="pl"><div class="pips">${Array.from({length:max}, (_, k) => `<button class="pip ${k < left ? '' : 'used'}" data-res="${i}.${k}" aria-label="${esc(r.name)} use ${k+1}"></button>`).join('')}</div></div>
       <div class="pl rd">${esc(r.note)} <span class="rt">· per ${r.reset} rest</span></div>
-      <div class="ed" style="grid-column:1/-1"><div class="edrow"><input data-f="res.${i}.name" value="${esc(r.name)}" aria-label="Name"><input class="n" data-f="res.${i}.max" value="${esc(r.max)}" title="Uses (or pb)" aria-label="Uses"><select data-f="res.${i}.reset" aria-label="Resets on"><option ${r.reset==='long'?'selected':''} value="long">long</option><option ${r.reset==='short'?'selected':''} value="short">short</option></select><button class="x" data-del="res.${i}" aria-label="Delete">×</button></div><div class="edrow" style="margin-top:4px"><input data-f="res.${i}.note" value="${esc(r.note)}" aria-label="Description"></div></div>
+      <div class="ed" style="grid-column:1/-1"><div class="edrow"><input data-f="res.${i}.name" value="${esc(r.name)}" aria-label="Name"><input class="n" data-f="res.${i}.max" value="${esc(r.max)}" title="Uses (a number, pb or int)" aria-label="Uses"><select data-f="res.${i}.reset" aria-label="Resets on"><option ${r.reset==='long'?'selected':''} value="long">long</option><option ${r.reset==='short'?'selected':''} value="short">short</option></select><button class="x" data-del="res.${i}" aria-label="Delete">×</button></div><div class="edrow" style="margin-top:4px"><input data-f="res.${i}.note" value="${esc(r.note)}" aria-label="Description"></div></div>
     </div>`;
   }).join('');
   refreshTray();
@@ -1107,7 +1173,7 @@ function renderSpells(){
         <span class="meta"><span class="tm">${esc(s.time)}</span><span class="rg">${esc(s.range)}</span></span>
         <span class="nt">${esc(s.notes)}</span>
         <span class="bt">
-          ${s.atk ? `<button class="roll" data-spell-atk="${gi}.${si}" title="Roll spell attack">${fmt(spAtk())}</button>` : ''}
+          ${s.atk ? `<button class="roll" data-spell-atk="${gi}.${si}" title="Roll spell attack">${fmt(spAtkCast())}</button>` : ''}
           ${s.dice ? `<button class="roll dice" data-spell-dice="${gi}.${si}" title="Roll">${esc(s.dice.replace(/\+/g,' + '))}</button>` : ''}
           ${lvl ? `<button class="btn sm" data-cast="${gi}.${si}" title="Cast using a spell slot">Cast</button>` : s.c ? `<button class="btn sm" data-cast="${gi}.${si}">Focus</button>` : ''}
           ${s.r && lvl ? `<button class="btn sm" data-ritual="${gi}.${si}" title="Cast as a ritual (+10 min, no slot)">Ritual</button>` : ''}
@@ -1127,12 +1193,13 @@ function renderSpells(){
     <div class="ed"><button class="btn sm" style="margin-top:6px" data-addspell="${gi}">+ spell in “${esc(g.name)}”</button></div></div>`).join('');
 }
 function renderFeatures(){
-  const sections = [['species','Species Traits'],['cls','Class Features'],['infusions','Infusions'],['feats','Feats']];
+  const sections = [['species','Species Traits'],['cls','Class Features'],['infusions','Replicated Magic Items'],['feats','Feats']];
   $('#featGrid').innerHTML = sections.map(([k, title]) => `
-    <div class="panel"><h2>${title}</h2>
+    <div class="panel"><h2>${title}${k === 'infusions' ? '<span class="r muted" style="font-family:var(--type);font-size:13px;letter-spacing:.03em;font-variant:normal;text-transform:none" data-c="infcount"></span>' : ''}</h2>
+      ${k === 'infusions' ? `<p class="hint" style="margin:0 0 10px">Known plans. After each long rest, mark the items you created that day.</p><div class="ed" style="margin-bottom:8px"><span class="lbl">Item limit (blank = auto)</span> <input type="number" data-f="infCap" value="${esc(S.infCap)}" style="width:60px;text-align:center" aria-label="Replicated item limit"></div>` : ''}
       <div class="feats">${S.features[k].map((f, i) => `
         <div class="ft">
-          <div class="pl"><h4>${esc(f.n)}${f.star ? ' <span class="star" title="Marked ** on the original sheet">★</span>' : ''}</h4>${f.t ? `<p>${esc(f.t)}</p>` : ''}</div>
+          <div class="pl"><h4>${esc(f.n)}${k === 'infusions' ? ` <button class="chip good ${f.on ? 'on' : ''}" data-infuse="${i}" aria-pressed="${!!f.on}" style="margin-left:auto">${f.on ? 'Created' : 'Not created'}</button>` : ''}</h4>${f.t ? `<p>${esc(f.t)}</p>` : ''}</div>
           <div class="ed"><div class="edrow"><input data-f="features.${k}.${i}.n" value="${esc(f.n)}" aria-label="Feature name"><button class="x" data-del="features.${k}.${i}" aria-label="Delete">×</button></div><textarea data-f="features.${k}.${i}.t" rows="2" style="width:100%;margin-top:4px" aria-label="Description">${esc(f.t)}</textarea></div>
         </div>`).join('')}</div>
       <div class="addrow ed"><button class="btn sm" data-addfeat="${k}">+ Add</button></div>
@@ -1241,18 +1308,23 @@ document.addEventListener('click', e => {
   if(t.id === 'logClear'){ LOG = []; try{ sessionStorage.removeItem('nyx-log'); }catch{} renderLog(); return; }
   if(t.id === 'btnMenu'){ $('#themeName').textContent = S.ui.theme; $('#menu').showModal(); return; }
 
-  if(d.atk !== undefined){ const a = S.attacks[d.atk]; d20(a.name + ' — attack', num(String(a.bonus).replace('−','-')), 'attack', num(d.atk)); return; }
-  if(d.dmg){ const [i, j] = d.dmg.split('.').map(Number); const a = S.attacks[i]; dmgRoll(`${a.name} — ${a.dmg[j].l}`, a.dmg[j].f, /^[+−-]?\d+$/.test(String(a.bonus).trim()) ? i : null); return; }
+  if(d.atk !== undefined){ const a = S.attacks[d.atk]; d20(a.name + ' — attack', atkNum(a), 'attack', num(d.atk)); return; }
+  if(d.dmg){ const [i, j] = d.dmg.split('.').map(Number); const a = S.attacks[i]; dmgRoll(`${a.name} — ${a.dmg[j].l}`, a.dmg[j].f, atkNum(a) !== null ? i : null); return; }
   if(d.cannonRoll){
     const k = d.cannonRoll;
     if(k === 'flame') dmgRoll(`Flamethrower (DC ${spDC()} Dex)`, '2d8');
-    else if(k === 'ballista-atk') d20('Force Ballista — attack', num(ballistaBonus().replace('−','-')), 'attack');
+    else if(k === 'ballista-atk') d20('Force Ballista — attack', atkNum(ballista()), 'attack');
     else if(k === 'ballista-dmg') dmgRoll('Force Ballista — force', '2d8');
     else if(k === 'protect') dmgRoll('Protector — temp HP', '1d8+int');
     return;
   }
   if(d.cannon){ S.cannon.hp = Math.min(num(S.cannon.max), Math.max(0, num(S.cannon.hp) + num(d.cannon))); bindAll(); save(); return; }
   if(d.res){ const [i, k] = d.res.split('.').map(Number); const r = S.res[i]; const left = Math.max(0, resMax(r) - num(r.used)); r.used = k < left ? resMax(r) - k : resMax(r) - k - 1; r.used = Math.max(0, Math.min(resMax(r), r.used)); renderResources(); save(); return; }
+  if(d.infuse !== undefined){
+    const f = S.features.infusions[d.infuse];
+    if(!f.on && infActive() >= infMax()){ say(`Only ${infMax()} replicated items at a time`, 'Un-create one first.'); return; }
+    f.on = !f.on; renderFeatures(); renderSpells(); refresh(); save(); return;
+  }
   if(d.cond){ S.conds[d.cond] = !S.conds[d.cond]; renderConds(); save(); return; }
   if(d.exh){ S.exh = Math.max(0, Math.min(6, S.exh + num(d.exh))); refresh(); save(); return; }
   if(t.id === 'concEnd'){ S.conc = ''; bindAll(); save(); return; }
@@ -1279,7 +1351,7 @@ document.addEventListener('click', e => {
     save(); return;
   }
   if(d.ritual){ const [g, i] = d.ritual.split('.').map(Number); const sp = S.spellGroups[g].spells[i]; if(sp.c){ S.conc = sp.name; bindAll(); } say(`${sp.name} (ritual)`, 'Takes 10 extra minutes; no slot spent.'); save(); return; }
-  if(d.spellAtk){ const [g, i] = d.spellAtk.split('.').map(Number); d20(S.spellGroups[g].spells[i].name + ' — attack', spAtk(), 'attack'); return; }
+  if(d.spellAtk){ const [g, i] = d.spellAtk.split('.').map(Number); d20(S.spellGroups[g].spells[i].name + ' — attack', spAtkCast(), 'attack'); return; }
   if(d.spellDice){ const [g, i] = d.spellDice.split('.').map(Number); const sp = S.spellGroups[g].spells[i]; dmgRoll(sp.name, sp.dice); return; }
 
   if(d.use){ const it = S.items[d.use]; if(num(it.q) < 1) return; it.q = num(it.q) - 1; const r = rollExpr(it.dice); if(r){ toast({label: it.n, total: r.total, detail: r.detail}); } renderItems(); save(); return; }
