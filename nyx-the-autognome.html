@@ -702,13 +702,13 @@ const SKILL_ABIL = {}; Object.entries(SKILLS).forEach(([a, l]) => l.forEach(([k,
 const CONDITIONS = ['Blinded','Charmed','Deafened','Frightened','Grappled','Incapacitated','Invisible','Paralyzed','Petrified','Poisoned','Prone','Restrained','Stunned','Unconscious'];
 
 const DEFAULT = {
-  v:2, savedAt:0,
-  name:'Nyx', level:6, xp:'', cls:'Artificer', subclass:'Artillerist', species:'Autognome', background:'Criminal', alignment:'Neutral',
+  v:3, savedAt:0,
+  name:'Nyx', level:7, xp:'', cls:'Artificer', subclass:'Artillerist', species:'Autognome', background:'Criminal', alignment:'Neutral',
   abil:{str:12,dex:14,con:14,int:16,wis:12,cha:8},
   prof:{'save:int':1,'save:con':1,'skill:arcana':1,'skill:investigation':1,'skill:sleight':1,'skill:stealth':1},
   alert:true, speed:'30', size:'S',
   ac:{base:19, note:'Scale Mail 14 + Dex 2 + Shield 2 + Enhanced Defense 1'},
-  hp:{cur:46,max:46,temp:0}, hd:{max:6,spent:0,die:8}, death:{s:0,f:0}, insp:false,
+  hp:{cur:53,max:53,temp:0}, hd:{max:7,spent:0,die:8}, death:{s:0,f:0}, insp:false,
   fx:{shield:false}, conds:{}, exh:0, conc:'', spellBonus:0,
   ui:{mode:0,bfs:false,tab:'combat',theme:'auto'},
   attacks:[
@@ -724,10 +724,11 @@ const DEFAULT = {
     {id:'bfs', name:'Built for Success', max:'pb', used:0, reset:'long', note:'+1d4 to an attack roll, check or save. Uses = proficiency bonus.'},
     {id:'recall', name:'Branch Recall', max:1, used:0, reset:'long', note:'A failed Int or Wis save can be treated as a success.'},
     {id:'apt', name:'All-Purpose Tool cantrip', max:1, used:0, reset:'long', note:'Any spell list · lasts 8 hours.'},
+    {id:'flash', name:'Flash of Genius', max:'int', used:0, reset:'long', note:'Reaction: add Int modifier to a check or save by you or a creature within 30 ft.'},
     {id:'cannon', name:'Eldritch Cannon (free cast)', max:1, used:0, reset:'long', note:'Otherwise costs a spell slot.'}
   ],
   defensesText:'Resistance: poison damage\nImmune: disease\nAdvantage on saves vs. poison & paralysis\nDarkvision\nNo need to eat, drink or breathe',
-  slots:{1:{t:4,u:0},2:{t:2,u:0},3:{t:0,u:0},4:{t:0,u:0},5:{t:0,u:0},6:{t:0,u:0},7:{t:0,u:0},8:{t:0,u:0},9:{t:0,u:0}},
+  slots:{1:{t:4,u:0},2:{t:3,u:0},3:{t:0,u:0},4:{t:0,u:0},5:{t:0,u:0},6:{t:0,u:0},7:{t:0,u:0},8:{t:0,u:0},9:{t:0,u:0}},
   spellGroups:[
     {name:'Cantrips', spells:[
       {lvl:0,name:'Mending',time:'1m',range:'Touch',notes:'1d8 + Con HP (Healing Machine)',dice:'1d8+con',atk:false},
@@ -735,7 +736,7 @@ const DEFAULT = {
       {lvl:0,name:'Green Flame Blade',time:'A',range:'Self (5′)',notes:''},
       {lvl:0,name:'Booming Blade',time:'A',range:'Self (5′)',notes:''}
     ]},
-    {name:'Prepared (5)', spells:[
+    {name:'Prepared (5 of 7)', spells:[
       {lvl:1,name:'Cure Wounds',time:'A',range:'Touch',notes:'2d8 + Int, +2d8 per slot level',dice:'2d8+int'},
       {lvl:1,name:'Feather Fall',time:'R',range:"60′",notes:'5 creatures, 1 minute'},
       {lvl:1,name:'Detect Magic',time:'A',range:"Self (30′)",notes:'10 minutes',c:true,r:true},
@@ -768,6 +769,7 @@ const DEFAULT = {
       {n:'Protector',t:"It and everyone I choose within 10′ gain 1d8 + Int temp HP."},
       {n:'Homebrew: Observer Drone',t:'No combat abilities.'},
       {n:'Arms',t:'Torch; Grappling Hook schematic.'},
+      {n:'Flash of Genius',t:'Level 7: reaction to add your Int modifier to an ability check or saving throw made by you or a creature within 30 feet. Uses = Int modifier per long rest.'},
       {n:'Tool Expertise',t:'Level 6: proficiency bonus is doubled on ability checks that use a tool you are proficient with.'},
       {n:'Expanded Replication',t:'Level 6: can learn plans from the Artificer level 6+ Magic Item Plans list.'},
       {n:'Spell Scrolls',t:'Can craft spell scrolls with Arcana.'},
@@ -833,6 +835,19 @@ function load(){
     }
     st.v = 2;
   }
+  if((pick && (pick.v || 1) < 3) && num(st.level) === 6){   // level 6 -> 7
+    st.level = 7; st.hp.max = num(st.hp.max) + 7; st.hp.cur = num(st.hp.cur) + 7; st.hd.max = num(st.hd.max) + 1;
+    st.slots[2].t = Math.max(3, num(st.slots[2].t));
+    if(!st.res.some(r => r.id === 'flash')){
+      const i = Math.max(0, st.res.findIndex(r => r.id === 'cannon'));
+      st.res.splice(i, 0, clone(DEFAULT.res.find(r => r.id === 'flash')));
+    }
+    if(!st.features.cls.some(f => f.n === 'Flash of Genius')){
+      const i = Math.max(0, st.features.cls.findIndex(f => f.n === 'Tool Expertise'));
+      st.features.cls.splice(i, 0, clone(DEFAULT.features.cls.find(f => f.n === 'Flash of Genius')));
+    }
+  }
+  if(pick) st.v = 3;
   st.features.infusions.forEach(f => { if(f.on === undefined) f.on = !!f.star; delete f.star; });
   st.attacks.forEach(a => { if(/ballista/i.test(a.name) && String(a.bonus).trim() === '+5') a.bonus = 'spell'; });
   return st;
@@ -866,7 +881,7 @@ const ppV    = () => 10 + skillB('perception');
 const acV    = () => num(S.ac.base) + (S.fx.shield ? 5 : 0);
 const spAtk  = () => mod('int') + pb() + num(S.spellBonus);
 const spDC   = () => 8 + mod('int') + pb() + num(S.spellBonus);
-const resMax = r => r.max === 'pb' ? pb() : num(r.max);
+const resMax = r => r.max === 'pb' ? pb() : r.max === 'int' ? Math.max(1, mod('int')) : num(r.max);
 const hdLeft = () => Math.max(0, num(S.hd.max) - num(S.hd.spent));
 const gpTotal = () => { const c = S.coins; return Math.round((num(c.cp)/100 + num(c.sp)/10 + num(c.ep)/2 + num(c.gp) + num(c.pp)*10) * 100) / 100; };
 const infMax = () => { const l = num(S.level); return l >= 18 ? 6 : l >= 14 ? 5 : l >= 10 ? 4 : l >= 6 ? 3 : 2; };
@@ -1074,7 +1089,7 @@ function renderResources(){
       <div class="pl rn">${esc(r.name)}</div>
       <div class="pl"><div class="pips">${Array.from({length:max}, (_, k) => `<button class="pip ${k < left ? '' : 'used'}" data-res="${i}.${k}" aria-label="${esc(r.name)} use ${k+1}"></button>`).join('')}</div></div>
       <div class="pl rd">${esc(r.note)} <span class="rt">· per ${r.reset} rest</span></div>
-      <div class="ed" style="grid-column:1/-1"><div class="edrow"><input data-f="res.${i}.name" value="${esc(r.name)}" aria-label="Name"><input class="n" data-f="res.${i}.max" value="${esc(r.max)}" title="Uses (or pb)" aria-label="Uses"><select data-f="res.${i}.reset" aria-label="Resets on"><option ${r.reset==='long'?'selected':''} value="long">long</option><option ${r.reset==='short'?'selected':''} value="short">short</option></select><button class="x" data-del="res.${i}" aria-label="Delete">×</button></div><div class="edrow" style="margin-top:4px"><input data-f="res.${i}.note" value="${esc(r.note)}" aria-label="Description"></div></div>
+      <div class="ed" style="grid-column:1/-1"><div class="edrow"><input data-f="res.${i}.name" value="${esc(r.name)}" aria-label="Name"><input class="n" data-f="res.${i}.max" value="${esc(r.max)}" title="Uses (a number, pb or int)" aria-label="Uses"><select data-f="res.${i}.reset" aria-label="Resets on"><option ${r.reset==='long'?'selected':''} value="long">long</option><option ${r.reset==='short'?'selected':''} value="short">short</option></select><button class="x" data-del="res.${i}" aria-label="Delete">×</button></div><div class="edrow" style="margin-top:4px"><input data-f="res.${i}.note" value="${esc(r.note)}" aria-label="Description"></div></div>
     </div>`;
   }).join('');
   refreshTray();
