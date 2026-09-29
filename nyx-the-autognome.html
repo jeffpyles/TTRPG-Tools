@@ -1,0 +1,1371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nyx, the Autognome</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%23211a14'/%3E%3Cpath fill='none' stroke='%23d8b170' stroke-width='2.4' d='M16 8.5l2 .4.7 2.3 2 1 2.2-1 1.7 1.7-1 2.2 1 2 2.3.7.4 2-.4 2-2.3.7-1 2 1 2.2-1.7 1.7-2.2-1-2 1-.7 2.3-2 .4-2-.4-.7-2.3-2-1-2.2 1-1.7-1.7 1-2.2-1-2-2.3-.7-.4-2 .4-2 2.3-.7 1-2-1-2.2 1.7-1.7 2.2 1 2-1 .7-2.3z' transform='translate(-3.5 -3.5) scale(1.22)'/%3E%3Ccircle cx='16' cy='16' r='4' fill='%23c0673a'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,700;1,400&family=Alegreya+SC:wght@400;500;700&family=Special+Elite&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#15110d; --bg2:#1b1510; --panel:#211a14; --panel2:#2b2219; --line:#4a3b2a; --line2:#362b1f;
+  --brass:#b98f52; --brass-hi:#dcb676; --copper:#c8703f; --verd:#5fa08e;
+  --text:#eadfc9; --muted:#a29278; --danger:#d0563f; --ok:#86b571;
+  --ink-on-brass:#1a130c;
+  --shadow:0 1px 0 rgba(255,255,255,.035) inset,0 8px 22px rgba(0,0,0,.35);
+  --serif:'Alegreya',Georgia,'Times New Roman',serif;
+  --sc:'Alegreya SC','Alegreya',Georgia,serif;
+  --type:'Special Elite','Courier New',monospace;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme:light){
+  :root:not([data-theme="dark"]){
+    --bg:#e9dcbf; --bg2:#efe4cb; --panel:#f7eed9; --panel2:#efe3c8; --line:#a98d5c; --line2:#cdb98e;
+    --brass:#8a6425; --brass-hi:#6f4f17; --copper:#a4501f; --verd:#2f6f61;
+    --text:#2a2018; --muted:#6f5f45; --danger:#a83422; --ok:#4d7a3a;
+    --ink-on-brass:#fff8e6;
+    --shadow:0 1px 0 rgba(255,255,255,.6) inset,0 6px 16px rgba(80,55,20,.18);
+    color-scheme:light;
+  }
+}
+:root[data-theme="light"]{
+  --bg:#e9dcbf; --bg2:#efe4cb; --panel:#f7eed9; --panel2:#efe3c8; --line:#a98d5c; --line2:#cdb98e;
+  --brass:#8a6425; --brass-hi:#6f4f17; --copper:#a4501f; --verd:#2f6f61;
+  --text:#2a2018; --muted:#6f5f45; --danger:#a83422; --ok:#4d7a3a;
+  --ink-on-brass:#fff8e6;
+  --shadow:0 1px 0 rgba(255,255,255,.6) inset,0 6px 16px rgba(80,55,20,.18);
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; color:var(--text); font-family:var(--serif); font-size:17px; line-height:1.35;
+  background:
+    radial-gradient(1200px 600px at 80% -10%, rgba(200,112,63,.10), transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, rgba(95,160,142,.07), transparent 60%),
+    repeating-linear-gradient(135deg, rgba(255,255,255,.012) 0 2px, transparent 2px 6px),
+    var(--bg);
+  background-attachment:fixed;
+  min-height:100vh;
+}
+button,input,select,textarea{font:inherit;color:inherit}
+input,textarea,select{
+  background:transparent; border:0; border-bottom:1px dashed var(--line); border-radius:0; padding:2px 3px; min-width:0; width:100%;
+}
+input:focus,textarea:focus,select:focus,[contenteditable]:focus{outline:none;border-color:var(--brass-hi);background:rgba(185,143,82,.09)}
+input[type=number]{-moz-appearance:textfield;appearance:textfield}
+input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+select{background:var(--panel2);border:1px solid var(--line);border-radius:4px}
+textarea{resize:vertical;border:1px solid var(--line2);border-radius:4px;padding:8px 10px;background:rgba(0,0,0,.12);line-height:1.4}
+.wrap{max-width:1240px;margin:0 auto;padding:16px 16px 40px}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:6px 2px 14px}
+.brand{display:flex;align-items:center;gap:14px;min-width:0;flex:1 1 420px}
+.cog{flex:none;width:58px;height:58px;color:var(--brass);filter:drop-shadow(0 2px 3px rgba(0,0,0,.4))}
+.cog .spin{transform-origin:50% 50%;animation:spin 60s linear infinite}
+@media (prefers-reduced-motion:reduce){.cog .spin{animation:none}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.namebox{min-width:0;flex:1}
+.nm{font-family:var(--sc);font-weight:700;font-size:clamp(28px,5vw,42px);letter-spacing:.02em;border:0;padding:0;line-height:1.05;color:var(--brass-hi);width:100%}
+.sub{display:flex;flex-wrap:wrap;gap:2px 8px;color:var(--muted);font-size:15px;align-items:baseline}
+.sub input{width:auto;field-sizing:content;border-bottom-color:transparent;font-size:15px;padding:0 2px}
+.sub input:hover{border-bottom-color:var(--line)}
+.sub .dot{opacity:.5}
+.sub .lvl{display:inline-flex;align-items:baseline;gap:4px}
+.sub .lvl input{width:2.2ch;text-align:center;color:var(--text)}
+.sub .xp{display:inline-flex;align-items:baseline;gap:4px}
+.sub .xp input{width:7ch;text-align:left}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.savestate{font-family:var(--type);font-size:12px;color:var(--muted);letter-spacing:.04em;min-width:78px;text-align:right}
+.savestate.bad{color:var(--danger)}
+
+.btn{
+  cursor:pointer;background:transparent;border:1px solid var(--brass);color:var(--brass-hi);border-radius:5px;padding:6px 12px;
+  font-family:var(--sc);letter-spacing:.06em;font-size:15px;line-height:1.1;transition:background .12s,color .12s,transform .05s;
+}
+.btn:hover{background:rgba(185,143,82,.16)}
+.btn:active{transform:translateY(1px)}
+.btn.solid{background:var(--brass);color:var(--ink-on-brass);font-weight:700}
+.btn.solid:hover{background:var(--brass-hi)}
+.btn.danger{border-color:var(--danger);color:var(--danger)}
+.btn.danger:hover{background:rgba(208,86,63,.15)}
+.btn.sm{padding:3px 8px;font-size:13px}
+.btn.on{background:var(--brass);color:var(--ink-on-brass)}
+.btn[disabled]{opacity:.4;cursor:not-allowed}
+:focus-visible{outline:2px solid var(--verd);outline-offset:2px}
+
+/* ---------- panels ---------- */
+.panel{
+  position:relative;background:linear-gradient(180deg,var(--panel2),var(--panel) 40%);border:1px solid var(--line);border-radius:7px;
+  padding:16px 16px 14px;box-shadow:var(--shadow);
+}
+.panel::before,.panel::after{
+  content:"";position:absolute;top:5px;width:7px;height:7px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,var(--brass-hi),var(--brass) 55%,#5a4322);opacity:.85;
+}
+.panel::before{left:6px}.panel::after{right:6px}
+.panel>h2,.panel>.h{
+  margin:-4px 0 10px;font-family:var(--sc);font-weight:500;letter-spacing:.14em;text-transform:lowercase;font-variant:small-caps;
+  font-size:15px;color:var(--brass);text-align:center;display:flex;gap:10px;align-items:center;justify-content:center;
+}
+.panel>h2::before,.panel>h2::after{content:"";height:1px;flex:1;background:linear-gradient(90deg,transparent,var(--line))}
+.panel>h2::after{background:linear-gradient(270deg,transparent,var(--line))}
+.panel>h2 .r{margin-left:auto}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.split{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:14px;align-items:start}
+.stack{display:grid;gap:14px;align-content:start}
+@media (max-width:900px){.split,.g2,.g3{grid-template-columns:minmax(0,1fr)}}
+.lbl{font-family:var(--sc);font-size:12px;letter-spacing:.14em;color:var(--muted);text-transform:lowercase;font-variant:small-caps}
+.muted{color:var(--muted)}
+.hint{color:var(--muted);font-size:14px;font-style:italic}
+
+/* ---------- vitals ---------- */
+.vitals{display:grid;grid-template-columns:auto minmax(260px,1.4fr) repeat(4,minmax(74px,.5fr));gap:12px;align-items:stretch;margin-bottom:12px}
+@media (max-width:1050px){.vitals{grid-template-columns:auto minmax(0,1fr) repeat(2,minmax(74px,.5fr))}}
+@media (max-width:560px){.vitals{grid-template-columns:auto minmax(0,1fr)}}
+.vt{padding:10px 12px 8px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:78px}
+.vt .big{font-family:var(--sc);font-weight:700;font-size:34px;line-height:1;color:var(--text);font-variant-numeric:lining-nums}
+.vt input.big{text-align:center;border:0;padding:0;width:100%;max-width:90px}
+.vt .lbl{margin-top:2px}
+.ac{position:relative;min-width:104px;clip-path:polygon(0 0,100% 0,100% 62%,50% 100%,0 62%);border-radius:0;border:0;background:linear-gradient(180deg,var(--brass-hi),var(--brass));color:var(--ink-on-brass);padding:14px 12px 30px;box-shadow:none}
+.ac::before,.ac::after{display:none}
+.ac .big{color:var(--ink-on-brass);font-size:44px}
+.ac .lbl{color:var(--ink-on-brass);opacity:.8}
+.acwrap{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;filter:drop-shadow(0 6px 10px rgba(0,0,0,.4))}
+.acwrap .btn{margin-top:-2px}
+.hpbox{padding:10px 14px}
+.hprow{display:flex;align-items:baseline;justify-content:center;gap:6px}
+.hprow input{width:3.2ch;text-align:center;font-family:var(--sc);font-weight:700;font-size:42px;line-height:1;border:0;padding:0;font-variant-numeric:lining-nums}
+.hprow .sl{font-size:28px;color:var(--muted)}
+.hprow .max{font-size:26px;color:var(--muted)}
+.hprow .tmp{display:flex;align-items:baseline;gap:4px;margin-left:12px;color:var(--verd)}
+.hprow .tmp input{font-size:24px;width:2.6ch;color:var(--verd)}
+.hpbar{height:9px;border-radius:5px;background:rgba(0,0,0,.35);border:1px solid var(--line);overflow:hidden;margin:6px 0 8px;position:relative}
+.hpbar i{display:block;height:100%;background:linear-gradient(90deg,var(--ok),#a8cf7a);transition:width .25s,background .25s}
+.hpbar i.mid{background:linear-gradient(90deg,#c9a23f,#e2c15e)}
+.hpbar i.low{background:linear-gradient(90deg,#b8402c,var(--danger))}
+.hpbar b{position:absolute;top:0;bottom:0;left:0;background:repeating-linear-gradient(90deg,var(--verd) 0 4px,transparent 4px 6px);opacity:.9}
+.hpctl{display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap}
+.hpctl input{width:62px;text-align:center;border:1px solid var(--line);border-radius:4px;padding:5px 4px;font-size:18px}
+.hpx{display:flex;justify-content:center;gap:14px;align-items:center;margin-top:8px;flex-wrap:wrap}
+.hd{display:flex;align-items:center;gap:6px;font-size:15px}
+.hd b{font-family:var(--sc);font-size:18px}
+.ds{display:flex;align-items:center;gap:6px;font-size:14px}
+.ds.dim{opacity:.55}
+.ds .row{display:flex;gap:3px;align-items:center}
+.ds .lb{font-family:var(--sc);font-size:11px;letter-spacing:.1em;color:var(--muted);width:2.6em;text-align:right}
+
+/* rivet pips */
+.pip{
+  width:22px;height:22px;border-radius:50%;cursor:pointer;padding:0;border:1.5px solid var(--brass);
+  background:radial-gradient(circle at 34% 30%,var(--brass-hi),var(--brass) 55%,#5a4322);box-shadow:0 1px 2px rgba(0,0,0,.5);transition:all .12s;
+}
+.pip.used{background:transparent;box-shadow:inset 0 1px 3px rgba(0,0,0,.6);border-color:var(--line)}
+.pip.sm{width:16px;height:16px}
+.pip.fail{border-color:var(--danger);background:radial-gradient(circle at 34% 30%,#e58a76,var(--danger) 60%,#6a1e10)}
+.pip.fail.used{background:transparent;border-color:var(--line)}
+.pip.win{border-color:var(--ok);background:radial-gradient(circle at 34% 30%,#c5e3ac,var(--ok) 60%,#345a25)}
+.pip.win.used{background:transparent;border-color:var(--line)}
+.pips{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+
+.insp{cursor:pointer;background:transparent;border:1px solid var(--line);border-radius:50%;width:40px;height:40px;color:var(--line);font-size:22px;line-height:1;transition:all .15s}
+.insp.on{border-color:var(--brass-hi);color:var(--brass-hi);background:rgba(220,182,118,.14);box-shadow:0 0 12px rgba(220,182,118,.35)}
+
+/* ---------- roll tray + tabs ---------- */
+.tray{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:0 0 12px;padding:8px 12px;border:1px dashed var(--line);border-radius:6px;background:rgba(0,0,0,.12)}
+.seg{display:inline-flex;border:1px solid var(--brass);border-radius:5px;overflow:hidden}
+.seg button{background:transparent;border:0;border-right:1px solid var(--brass);color:var(--brass-hi);padding:5px 12px;font-family:var(--sc);letter-spacing:.06em;font-size:14px;cursor:pointer}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--brass);color:var(--ink-on-brass);font-weight:700}
+.tray .grp{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.quick{display:flex;gap:5px;flex-wrap:wrap}
+.quick button{min-width:44px}
+.tabs{display:flex;gap:4px;margin:0 0 14px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{
+  cursor:pointer;background:transparent;border:1px solid transparent;border-bottom:0;color:var(--muted);padding:9px 16px 8px;
+  font-family:var(--sc);letter-spacing:.09em;font-size:16px;border-radius:6px 6px 0 0;white-space:nowrap;position:relative;top:1px
+}
+.tab:hover{color:var(--text)}
+.tab.on{color:var(--brass-hi);background:var(--panel);border-color:var(--line)}
+.tab .ic{margin-right:6px;opacity:.85}
+.pane{display:none}
+.pane.on{display:block}
+
+@media (max-width:720px){
+  .wrap{padding-bottom:84px}
+  .tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;margin:0;padding:6px 6px calc(6px + env(safe-area-inset-bottom));background:var(--bg2);border-top:1px solid var(--brass);border-bottom:0;justify-content:space-between;gap:2px;overflow:visible}
+  .tab{flex:1;padding:6px 2px 4px;border:0;border-radius:6px;font-size:12px;letter-spacing:.03em;display:flex;flex-direction:column;align-items:center;gap:1px;top:0}
+  .tab .ic{margin:0;font-size:19px}
+  .tab.on{background:rgba(185,143,82,.16);border:0}
+}
+
+/* ---------- rolls ---------- */
+.roll{
+  cursor:pointer;background:transparent;border:1px solid var(--brass);border-radius:5px;color:var(--brass-hi);
+  font-family:var(--sc);font-weight:700;font-size:17px;min-width:46px;padding:3px 8px;line-height:1.15;font-variant-numeric:lining-nums;transition:all .1s;
+}
+.roll:hover{background:var(--brass);color:var(--ink-on-brass);box-shadow:0 0 0 3px rgba(185,143,82,.22)}
+.roll.dice{font-weight:500;font-size:15px;text-align:left}
+.roll:active{transform:translateY(1px)}
+
+#toast{
+  position:fixed;right:18px;bottom:18px;z-index:60;width:min(340px,calc(100vw - 28px));cursor:pointer;
+  background:var(--bg2);border:1px solid var(--brass);border-radius:8px;padding:12px 16px 12px;box-shadow:0 14px 40px rgba(0,0,0,.55);
+  transform:translateY(20px);opacity:0;pointer-events:none;transition:all .18s;
+}
+#toast.show{transform:none;opacity:1;pointer-events:auto}
+#toast .tl{font-family:var(--sc);letter-spacing:.1em;color:var(--muted);font-size:14px}
+#toast .tt{font-family:var(--sc);font-weight:700;font-size:44px;line-height:1;color:var(--brass-hi);font-variant-numeric:lining-nums}
+#toast .td{font-family:var(--type);font-size:13px;color:var(--muted);margin-top:4px;overflow-wrap:anywhere}
+#toast.crit{border-color:var(--ok);box-shadow:0 0 0 2px rgba(134,181,113,.35),0 14px 40px rgba(0,0,0,.55)}
+#toast.crit .tt{color:var(--ok)}
+#toast.fumble{border-color:var(--danger)}
+#toast.fumble .tt{color:var(--danger)}
+#toast.msg .tt{font-size:20px;line-height:1.25;font-weight:500;font-family:var(--serif)}
+@media (max-width:720px){#toast{bottom:88px;right:14px}}
+
+#logPanel{position:fixed;top:0;right:0;bottom:0;width:min(360px,100vw);z-index:70;background:var(--bg2);border-left:1px solid var(--brass);box-shadow:-14px 0 40px rgba(0,0,0,.5);transform:translateX(102%);transition:transform .2s;display:flex;flex-direction:column}
+#logPanel.open{transform:none}
+#logPanel header{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)}
+#logPanel h3{margin:0;font-family:var(--sc);letter-spacing:.1em;font-weight:500;color:var(--brass-hi)}
+#logList{overflow:auto;padding:8px 14px;flex:1;margin:0;list-style:none}
+#logList li{padding:7px 0;border-bottom:1px dotted var(--line2);display:grid;grid-template-columns:1fr auto;gap:2px 10px}
+#logList .ll{font-size:15px}
+#logList .lt{font-family:var(--sc);font-weight:700;font-size:22px;color:var(--brass-hi);grid-row:span 2;align-self:center}
+#logList .ld{font-family:var(--type);font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+
+/* ---------- combat ---------- */
+.atk{display:grid;grid-template-columns:minmax(0,1.3fr) auto minmax(0,1.5fr) auto;gap:8px 12px;align-items:center;padding:9px 0;border-bottom:1px dotted var(--line)}
+.atk:last-child{border-bottom:0}
+.atk .an{font-family:var(--sc);font-size:19px;font-weight:700;letter-spacing:.02em;line-height:1.1}
+.atk .note{color:var(--muted);font-size:14px;line-height:1.2}
+.atk .hit{display:flex;gap:6px;align-items:center;justify-content:center;min-width:54px}
+.atk .dm{display:flex;flex-wrap:wrap;gap:6px}
+.atk .dm .roll small{display:block;font-weight:400;font-size:11px;letter-spacing:.08em;color:var(--muted);font-family:var(--sc);text-transform:lowercase}
+.atk .dm .roll:hover small{color:inherit}
+@media (max-width:720px){.atk{grid-template-columns:minmax(0,1fr) auto}.atk .dm{grid-column:1/-1}}
+.ed{display:none}
+body.editing .ed{display:revert}
+body.editing .pl{display:none!important}
+body.editing .edflex{display:flex}
+body.editing .tools .tr{grid-template-columns:24px minmax(0,1.4fr) 62px auto}
+.edrow{display:flex;gap:6px;align-items:center}
+.edrow input{flex:1}
+.edrow input.n{max-width:64px;text-align:center}
+.edrow select{width:auto;flex:none}
+.x{cursor:pointer;background:transparent;border:0;color:var(--danger);font-size:20px;line-height:1;padding:0 4px}
+.addrow{margin-top:10px;gap:8px;flex-wrap:wrap}
+body.editing .addrow.ed{display:flex}
+
+.cannon .modes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}
+@media (max-width:640px){.cannon .modes{grid-template-columns:1fr}}
+.mode{border:1px solid var(--line);border-radius:6px;padding:8px 10px;background:rgba(0,0,0,.14);display:grid;gap:5px;align-content:start}
+.mode h4{margin:0;font-family:var(--sc);font-size:16px;letter-spacing:.05em;color:var(--brass-hi)}
+.mode p{margin:0;font-size:14px;color:var(--muted);line-height:1.25}
+.cstat{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.cstat .num{font-family:var(--sc);font-weight:700;font-size:28px}
+.cstat input.num{width:2.6ch;text-align:center;border:0;padding:0}
+.stepper{display:inline-flex;align-items:center;gap:6px}
+.stepper button{width:28px;height:28px;border-radius:50%;padding:0;font-size:18px;line-height:1}
+.toggle{cursor:pointer;display:inline-flex;align-items:center;gap:8px;user-select:none}
+.toggle input{position:absolute;opacity:0;pointer-events:none;width:0}
+.toggle .sw{width:36px;height:20px;border-radius:12px;border:1px solid var(--brass);background:rgba(0,0,0,.3);position:relative;transition:.15s;flex:none}
+.toggle .sw::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:var(--brass);transition:.15s}
+.toggle input:checked+.sw{background:rgba(185,143,82,.35)}
+.toggle input:checked+.sw::after{left:18px;background:var(--brass-hi)}
+.toggle input:focus-visible+.sw{outline:2px solid var(--verd);outline-offset:2px}
+
+.res{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding:8px 0;border-bottom:1px dotted var(--line);align-items:center}
+.res:last-child{border-bottom:0}
+.res .rn{font-family:var(--sc);font-size:17px;font-weight:700}
+.res .rt{font-size:13px;color:var(--muted);font-family:var(--type)}
+.res .rd{grid-column:1/-1;color:var(--muted);font-size:14px;line-height:1.2}
+
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{cursor:pointer;background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:16px;padding:3px 11px;font-size:15px;transition:.12s}
+.chip:hover{border-color:var(--brass);color:var(--text)}
+.chip.on{background:rgba(200,112,63,.22);border-color:var(--copper);color:var(--text)}
+.chip.good.on{background:rgba(95,160,142,.22);border-color:var(--verd)}
+.tag{display:inline-block;padding:1px 9px;border:1px solid var(--verd);color:var(--verd);border-radius:10px;font-size:14px;margin:0 4px 4px 0}
+
+/* ---------- abilities ---------- */
+.abils{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media (max-width:1000px){.abils{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:620px){.abils{grid-template-columns:minmax(0,1fr)}}
+.ab{padding:12px 14px 10px}
+.abhead{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.abhead .n{flex:1;font-family:var(--sc);font-weight:700;font-size:19px;letter-spacing:.06em;color:var(--brass-hi)}
+.abhead .sc{width:3.2ch;text-align:center;font-family:var(--sc);font-weight:700;font-size:22px;border:1px solid var(--line);border-radius:4px;padding:2px}
+.rowk{display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:8px;align-items:center;padding:4px 0;border-top:1px dotted var(--line2)}
+.rowk.head{border-top:0;padding-top:0}
+.rowk .nm2{font-size:16px}
+.rowk.sv .nm2{font-family:var(--sc);letter-spacing:.06em;color:var(--brass)}
+.pm{cursor:pointer;background:transparent;border:1.5px solid var(--line);border-radius:50%;width:18px;height:18px;padding:0;position:relative}
+.pm.p1{background:var(--brass);border-color:var(--brass-hi)}
+.pm.p2{background:var(--brass);border-color:var(--brass-hi);box-shadow:0 0 0 3px var(--panel),0 0 0 4.5px var(--brass)}
+.roll.big{font-size:22px;min-width:54px}
+.tools .tr{display:grid;grid-template-columns:24px minmax(0,1.4fr) 62px auto auto;gap:8px;align-items:center;padding:5px 0;border-top:1px dotted var(--line2)}
+@media (max-width:620px){.tools .tr{grid-template-columns:24px minmax(0,1fr) auto}.tools .tr .sel,.tools .tr .flags{display:none}body.editing .tools .tr .sel,body.editing .tools .tr .flags{display:flex}}
+.tools .tr .flags{display:flex;gap:6px;font-size:13px;color:var(--muted)}
+
+/* ---------- spells ---------- */
+.spellstats{display:flex;gap:14px;flex-wrap:wrap;align-items:stretch}
+.sst{flex:1 1 90px;text-align:center;border:1px solid var(--line);border-radius:6px;padding:8px 6px;background:rgba(0,0,0,.14)}
+.sst .v{font-family:var(--sc);font-weight:700;font-size:30px;line-height:1.05;color:var(--brass-hi)}
+.slotgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.slot{border:1px solid var(--line);border-radius:6px;padding:8px 10px;background:rgba(0,0,0,.14);display:grid;gap:6px}
+.slot .sh{display:flex;justify-content:space-between;align-items:baseline}
+.slot .sh b{font-family:var(--sc);letter-spacing:.06em;color:var(--brass-hi)}
+.slot .sh span{font-family:var(--type);font-size:12px;color:var(--muted)}
+.slot input.tot{width:2.4ch;text-align:center;font-size:13px;display:none}
+body.editing .slot input.tot{display:inline-block}
+.slot.empty .pips{opacity:.35}
+.conc{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.conc input{flex:1;min-width:150px;border:1px solid var(--line);border-radius:4px;padding:5px 8px}
+.spgroup{margin-top:14px}
+.spgroup:first-of-type{margin-top:0}
+.spgroup h3{margin:0 0 4px;font-family:var(--sc);font-weight:500;font-size:15px;letter-spacing:.14em;color:var(--copper);text-transform:lowercase;font-variant:small-caps;display:flex;align-items:center;gap:8px}
+.spgroup h3 input{border:0;width:auto;color:inherit;font:inherit;letter-spacing:inherit;font-variant:inherit}
+.sp{display:grid;grid-template-columns:34px minmax(0,1.1fr) 44px 108px minmax(0,1.4fr) 210px;gap:6px 10px;align-items:center;padding:7px 0;border-top:1px dotted var(--line2)}
+.sp .lv{font-family:var(--sc);font-weight:700;font-size:16px;color:var(--brass);border:1px solid var(--line);border-radius:50%;width:26px;height:26px;display:grid;place-items:center}
+.sp .sn{font-family:var(--sc);font-size:18px;font-weight:700;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.sp .tg{font-family:var(--type);font-size:11px;padding:0 5px;border:1px solid var(--verd);color:var(--verd);border-radius:3px;line-height:1.5}
+.sp .tg.c{border-color:var(--copper);color:var(--copper)}
+.sp .tm,.sp .rg{font-size:15px;color:var(--muted)}
+.sp .nt{font-size:15px;line-height:1.2}
+.sp .bt{display:flex;gap:5px;justify-content:flex-end;flex-wrap:wrap}
+@media (max-width:820px){
+  .sp{grid-template-columns:34px minmax(0,1fr) auto;grid-template-areas:"lv sn bt" ". meta meta" ". nt nt"}
+  .sp .lv{grid-area:lv}.sp .sn{grid-area:sn}.sp .bt{grid-area:bt}.sp .nt{grid-area:nt}
+  .sp .tm,.sp .rg{grid-area:meta;display:inline}
+  .sp .meta{grid-area:meta;display:flex;gap:12px}
+}
+.sp .meta{display:contents}
+.sped{display:none;grid-template-columns:52px minmax(0,1.3fr) 56px 84px minmax(0,1.4fr) 68px 26px;gap:6px;align-items:center;padding:5px 0;border-top:1px dotted var(--line2)}
+body.editing .sped{display:grid}
+body.editing .sp{display:none}
+.sped .fl{display:flex;gap:6px;font-size:12px;font-family:var(--type)}
+.sped .fl label{display:inline-flex;gap:2px;align-items:center;cursor:pointer}
+.sped .fl input{width:auto}
+@media (max-width:820px){.sped{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+/* ---------- features / gear / story ---------- */
+.feats{display:grid;gap:10px}
+.ft{border-left:2px solid var(--brass);padding:2px 0 2px 12px}
+.ft h4{margin:0;font-family:var(--sc);font-size:18px;letter-spacing:.03em;color:var(--brass-hi);display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.ft p{margin:1px 0 0;color:var(--text);white-space:pre-wrap}
+.ft .star{color:var(--copper);font-size:14px}
+.ft [contenteditable]{border-bottom:1px dashed var(--line2);min-width:30px;display:block}
+.ft .edrow{align-items:flex-start}
+.ft .edrow>div{flex:1}
+.item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding:7px 0;border-top:1px dotted var(--line2);align-items:center}
+.item:first-of-type{border-top:0}
+.item .in{font-size:18px}
+.item .inote{color:var(--muted);font-size:14px}
+.item .iq{display:flex;gap:6px;align-items:center}
+.item .iq b{font-family:var(--sc);font-size:18px;min-width:1.5ch;text-align:center}
+.coins{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.coin{border:1px solid var(--line);border-radius:6px;background:rgba(0,0,0,.14);padding:6px 4px;text-align:center}
+.coin .lbl{display:block}
+.coin input{text-align:center;font-family:var(--sc);font-weight:700;font-size:24px;border:0;padding:0}
+.coin .st{display:flex;justify-content:center;gap:4px;margin-top:2px}
+.coin .st button{width:24px;height:22px;padding:0;font-size:15px}
+.attune{display:grid;gap:8px}
+.attune label{display:flex;gap:8px;align-items:center}
+.pmt{display:inline-flex;gap:8px;align-items:center}
+.armor-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.legend{font-family:var(--type);font-size:12px;color:var(--muted)}
+.foot{margin-top:26px;text-align:center;color:var(--muted);font-size:13px;font-family:var(--type);letter-spacing:.04em}
+.orn{display:flex;align-items:center;gap:10px;color:var(--brass);justify-content:center;margin:24px 0 0;opacity:.7}
+.orn::before,.orn::after{content:"";height:1px;flex:1;max-width:220px;background:linear-gradient(90deg,transparent,var(--line))}
+.orn::after{background:linear-gradient(270deg,transparent,var(--line))}
+
+dialog{background:var(--bg2);color:var(--text);border:1px solid var(--brass);border-radius:10px;padding:18px 20px;max-width:min(430px,calc(100vw - 28px));box-shadow:0 20px 60px rgba(0,0,0,.6)}
+dialog::backdrop{background:rgba(0,0,0,.6)}
+dialog h3{margin:0 0 10px;font-family:var(--sc);letter-spacing:.1em;font-weight:500;color:var(--brass-hi)}
+dialog .list{display:grid;gap:8px}
+dialog p{margin:8px 0 0;color:var(--muted);font-size:14px}
+
+@media print{
+  body{background:#fff;color:#000;font-size:12px}
+  :root{--panel:#fff;--panel2:#fff;--line:#999;--line2:#ccc;--text:#000;--muted:#444;--brass:#444;--brass-hi:#000;--copper:#333;--verd:#333;--bg2:#fff}
+  .tabs,.tray,.actions,#toast,#logPanel,.addrow,.x,.btn,.stepper button,.hpctl,.roll.dice small{display:none!important}
+  .pane{display:block!important;break-inside:auto;margin-bottom:12px}
+  .panel{box-shadow:none;break-inside:avoid}
+  .panel::before,.panel::after{display:none}
+  .ac{background:#eee;color:#000}.ac .big,.ac .lbl{color:#000}
+  .wrap{max-width:none;padding:0}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="brand">
+      <svg class="cog" viewBox="0 0 64 64" aria-hidden="true">
+        <g class="spin" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round">
+          <path d="M28 4h8l2 7 5 2 6-4 6 6-4 6 2 5 7 2v8l-7 2-2 5 4 6-6 6-6-4-5 2-2 7h-8l-2-7-5-2-6 4-6-6 4-6-2-5-7-2v-8l7-2 2-5-4-6 6-6 6 4 5-2z"/>
+        </g>
+        <circle cx="32" cy="32" r="12" fill="none" stroke="currentColor" stroke-width="3"/>
+        <circle cx="32" cy="32" r="4.5" fill="var(--copper)"/>
+      </svg>
+      <div class="namebox">
+        <input class="nm" data-f="name" aria-label="Character name" spellcheck="false">
+        <div class="sub">
+          <span class="lvl">Level <input type="number" data-f="level" min="1" max="20" aria-label="Level"></span>
+          <input data-f="cls" aria-label="Class" size="8"> <span class="dot">◆</span>
+          <input data-f="subclass" aria-label="Subclass" size="10"> <span class="dot">◆</span>
+          <input data-f="species" aria-label="Species" size="8"> <span class="dot">◆</span>
+          <input data-f="background" aria-label="Background" size="8">
+          <span class="xp">· XP <input data-f="xp" inputmode="numeric" placeholder="—" aria-label="XP"></span>
+        </div>
+      </div>
+    </div>
+    <div class="actions">
+      <span class="savestate" id="saveState" role="status">saved</span>
+      <button class="btn" id="btnShort" title="Short rest">Short Rest</button>
+      <button class="btn solid" id="btnLong" title="Long rest — restores HP, slots and daily features">Long Rest</button>
+      <button class="btn" id="btnEdit" aria-pressed="false" title="Edit attacks, spells, features, items">✎ Edit</button>
+      <button class="btn" id="btnLog" title="Roll history">Log</button>
+      <button class="btn" id="btnMenu" title="Save, load, print, theme">⋯</button>
+    </div>
+  </header>
+
+  <!-- vitals -->
+  <section class="vitals" aria-label="Vitals">
+    <div class="acwrap">
+      <div class="vt panel ac"><span class="lbl">Armor Class</span><span class="big" data-c="ac">19</span></div>
+      <button class="chip good" id="fxShield" title="Shield spell: +5 AC until the start of your next turn">Shield +5</button>
+    </div>
+
+    <div class="panel hpbox">
+      <div class="hprow">
+        <input type="number" data-f="hp.cur" data-hp aria-label="Current hit points">
+        <span class="sl">/</span>
+        <input class="max" type="number" data-f="hp.max" data-hp aria-label="Maximum hit points" style="font-size:26px;color:var(--muted)">
+        <span class="tmp" title="Temporary hit points"><span class="lbl">Temp</span><input type="number" data-f="hp.temp" data-hp aria-label="Temporary hit points"></span>
+      </div>
+      <div class="hpbar"><i data-bar="hp"></i><b data-bar="temp"></b></div>
+      <div class="hpctl">
+        <input type="number" id="hpAmt" min="0" inputmode="numeric" placeholder="0" aria-label="Amount">
+        <button class="btn danger" data-hp-act="dmg">Damage</button>
+        <button class="btn" data-hp-act="heal">Heal</button>
+        <button class="btn" data-hp-act="temp">+ Temp</button>
+      </div>
+      <div class="hpx">
+        <div class="hd"><span class="lbl">Hit Dice</span> <button class="btn sm" id="hdSpend" title="Spend a Hit Die: roll and heal">Spend</button> <b data-c="hdLeft">5</b><span class="muted" data-c="hdMax">/ 5d8</span></div>
+        <div class="ds" id="deathSaves" title="Death saves"></div>
+      </div>
+    </div>
+
+    <div class="vt panel"><span class="lbl">Initiative</span><button class="roll big" data-roll="init" data-c="init">+5</button><label class="toggle" style="font-size:13px"><input type="checkbox" data-f="alert"><span class="sw"></span>Alert +PB</label></div>
+    <div class="vt panel"><span class="lbl">Speed</span><input class="big" data-f="speed" aria-label="Speed"><span class="lbl">feet</span></div>
+    <div class="vt panel"><span class="lbl">Prof. Bonus</span><span class="big" data-c="pb">+3</span><span class="lbl">Size <input data-f="size" style="width:3ch;text-align:center;display:inline-block" aria-label="Size"></span></div>
+    <div class="vt panel">
+      <span class="lbl">Passive Perc.</span><span class="big" data-c="pp">11</span>
+      <button class="insp" id="insp" title="Heroic Inspiration" aria-pressed="false">✦</button>
+    </div>
+  </section>
+
+  <!-- roll tray -->
+  <div class="tray" aria-label="Roll options">
+    <div class="grp">
+      <span class="lbl">d20 rolls</span>
+      <div class="seg" role="group" aria-label="Advantage mode">
+        <button data-mode="-1">Disadv</button><button data-mode="0" class="on">Normal</button><button data-mode="1">Adv</button>
+      </div>
+      <button class="chip good" id="bfsChip" title="Built for Success: add 1d4 to your next attack, check or save"><span>+1d4 Built for Success</span> <b id="bfsLeft"></b></button>
+    </div>
+    <div class="grp quick" aria-label="Free dice">
+      <span class="lbl">dice</span>
+      <button class="btn sm" data-die="4">d4</button><button class="btn sm" data-die="6">d6</button><button class="btn sm" data-die="8">d8</button><button class="btn sm" data-die="10">d10</button><button class="btn sm" data-die="12">d12</button><button class="btn sm" data-die="20">d20</button><button class="btn sm" data-die="100">d%</button>
+      <input id="freeRoll" placeholder="e.g. 3d6+2" style="width:110px;border:1px solid var(--line);border-radius:4px;padding:3px 6px" aria-label="Custom dice expression">
+    </div>
+  </div>
+
+  <nav class="tabs" role="tablist" aria-label="Sheet sections">
+    <button class="tab on" data-tab="combat" role="tab"><span class="ic">⚔</span>Combat</button>
+    <button class="tab" data-tab="spells" role="tab"><span class="ic">✧</span>Spells</button>
+    <button class="tab" data-tab="abilities" role="tab"><span class="ic">⚙</span>Skills</button>
+    <button class="tab" data-tab="features" role="tab"><span class="ic">✪</span>Features</button>
+    <button class="tab" data-tab="gear" role="tab"><span class="ic">⛁</span>Gear</button>
+    <button class="tab" data-tab="story" role="tab"><span class="ic">✎</span>Story</button>
+  </nav>
+
+  <!-- ======================= COMBAT ======================= -->
+  <main>
+  <section class="pane on" id="pane-combat" role="tabpanel">
+    <div class="split">
+      <div class="stack">
+        <div class="panel">
+          <h2>Weapons &amp; Damage Cantrips</h2>
+          <div id="attacks"></div>
+          <div class="addrow ed"><button class="btn sm" id="addAtk">+ Add attack</button></div>
+        </div>
+
+        <div class="panel cannon">
+          <h2>Eldritch Cannon</h2>
+          <div class="cstat">
+            <label class="toggle"><input type="checkbox" data-f="cannon.on" id="cannonOn"><span class="sw"></span><span>Deployed</span></label>
+            <div><span class="lbl">HP</span> <span class="stepper"><button class="btn sm" data-cannon="-1" aria-label="Cannon takes 1">−</button><input class="num" type="number" data-f="cannon.hp" style="width:3ch"><span class="muted">/</span><input type="number" data-f="cannon.max" style="width:3ch;color:var(--muted);text-align:center;border:0"><button class="btn sm" data-cannon="1" aria-label="Cannon heals 1">+</button></span></div>
+            <div><span class="lbl">AC</span> <input class="num" type="number" data-f="cannon.ac" style="width:3ch;text-align:center;font-family:var(--sc);font-weight:700;font-size:26px;border:0"></div>
+          </div>
+          <div class="modes">
+            <div class="mode"><h4>Flamethrower</h4><p>15′ cone, Dex save (DC <b data-c="dc">14</b>) — 2d8 fire, half on a save.</p><button class="roll dice" data-cannon-roll="flame">Roll 2d8 fire</button></div>
+            <div class="mode"><h4>Force Ballista</h4><p>Ranged spell attack, 120′. 2d8 force, pushed 5′.</p><div class="edflex" style="display:flex;gap:6px;flex-wrap:wrap"><button class="roll" data-cannon-roll="ballista-atk" data-c="ballistaBonus">+5</button><button class="roll dice" data-cannon-roll="ballista-dmg">2d8 force</button></div></div>
+            <div class="mode"><h4>Protector</h4><p>It &amp; everyone I choose within 10′ gain 1d8 + Int temp HP.</p><button class="roll dice" data-cannon-roll="protect">Roll 1d8+Int</button></div>
+          </div>
+          <p class="hint" style="margin:10px 0 0">Bonus action to command. Observer drone (homebrew): no combat abilities.</p>
+        </div>
+      </div>
+
+      <div class="stack">
+        <div class="panel">
+          <h2>Features in Play</h2>
+          <div id="resources"></div>
+          <div class="addrow ed"><button class="btn sm" id="addRes">+ Add tracker</button></div>
+        </div>
+        <div class="panel">
+          <h2>Conditions &amp; Effects</h2>
+          <div class="chips" id="conds"></div>
+          <div style="display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap">
+            <span class="lbl">Exhaustion</span>
+            <span class="stepper"><button class="btn sm" data-exh="-1" aria-label="Reduce exhaustion">−</button><b id="exhVal" style="font-family:var(--sc);font-size:20px;min-width:1.5ch;text-align:center">0</b><button class="btn sm" data-exh="1" aria-label="Increase exhaustion">+</button></span>
+            <span class="hint" id="exhNote"></span>
+          </div>
+          <div style="margin-top:12px"><span class="lbl">Concentrating on</span>
+            <div class="conc"><input data-f="conc" placeholder="Nothing" aria-label="Concentrating on"><button class="btn sm" id="concSave" title="Roll a Constitution save to hold concentration">Con save</button><button class="btn sm" id="concEnd">Drop</button></div>
+          </div>
+        </div>
+        <div class="panel">
+          <h2>Defenses</h2>
+          <div id="defTags"></div>
+          <div class="ed" style="margin-top:8px"><span class="lbl">Defenses (one per line)</span><textarea data-f="defensesText" rows="4"></textarea></div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap">
+            <span class="lbl">Base AC</span><input type="number" data-f="ac.base" style="width:60px;border:1px solid var(--line);border-radius:4px;text-align:center" aria-label="Base armor class">
+            <span class="hint" style="flex:1;min-width:140px" data-f="ac.note" contenteditable="plaintext-only" spellcheck="false"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= SPELLS ======================= -->
+  <section class="pane" id="pane-spells" role="tabpanel">
+    <div class="grid" style="gap:14px">
+      <div class="panel">
+        <h2>Spellcasting</h2>
+        <div class="spellstats">
+          <div class="sst"><div class="lbl">Ability</div><div class="v" style="font-size:22px;padding-top:6px">Intelligence</div></div>
+          <div class="sst"><div class="lbl">Modifier</div><div class="v" data-c="mod:int">+3</div></div>
+          <div class="sst"><div class="lbl">Spell Save DC</div><div class="v" data-c="dc">14</div></div>
+          <div class="sst"><div class="lbl">Spell Attack</div><button class="roll big" data-roll="spatk" data-c="spatk">+6</button></div>
+          <div class="sst"><div class="lbl">Extra bonus</div><input class="v" type="number" data-f="spellBonus" style="width:100%;text-align:center;border:0;font-size:26px" title="Added to DC and attack (e.g. +2 All-Purpose Tool)"></div>
+        </div>
+        <p class="hint" style="margin:8px 0 0">Extra bonus is added to both DC and attack — use 2 while the +2 All-Purpose Tool is in hand.</p>
+      </div>
+
+      <div class="panel">
+        <h2>Spell Slots</h2>
+        <div class="slotgrid" id="slots"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Cantrips &amp; Prepared Spells</h2>
+        <div id="spells"></div>
+        <div class="addrow ed"><button class="btn sm" id="addSpell">+ Add spell</button><button class="btn sm" id="addGroup">+ Add group</button></div>
+        <p class="hint" style="margin:10px 0 0">Cast spends the lowest available slot of that level (or the next one up). Tags: <span class="tg c" style="font-family:var(--type);font-size:11px;border:1px solid var(--copper);color:var(--copper);padding:0 5px;border-radius:3px">C</span> concentration, <span style="font-family:var(--type);font-size:11px;border:1px solid var(--verd);color:var(--verd);padding:0 5px;border-radius:3px">R</span> ritual, <span style="font-family:var(--type);font-size:11px;border:1px solid var(--verd);color:var(--verd);padding:0 5px;border-radius:3px">M</span> material.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= SKILLS ======================= -->
+  <section class="pane" id="pane-abilities" role="tabpanel">
+    <div class="abils" id="abils"></div>
+    <div class="grid g2" style="margin-top:14px">
+      <div class="panel tools">
+        <h2>Tool Proficiencies</h2>
+        <div id="tools"></div>
+        <div class="addrow ed"><button class="btn sm" id="addTool">+ Add tool</button></div>
+        <p class="hint" style="margin:8px 0 0">Armor of Tools: add Int again to checks with an integrated tool (PB + Int + Int).</p>
+      </div>
+      <div class="panel">
+        <h2>Training</h2>
+        <div class="lbl">Armor</div>
+        <div class="armor-chips" id="armorTrain"></div>
+        <div class="lbl">Weapons</div>
+        <textarea data-f="weaponsText" rows="2" style="width:100%;margin:4px 0 10px"></textarea>
+        <div class="lbl">Languages</div>
+        <input data-f="languages" style="margin-top:4px" aria-label="Languages">
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= FEATURES ======================= -->
+  <section class="pane" id="pane-features" role="tabpanel">
+    <div class="grid g2" id="featGrid"></div>
+  </section>
+
+  <!-- ======================= GEAR ======================= -->
+  <section class="pane" id="pane-gear" role="tabpanel">
+    <div class="split">
+      <div class="stack">
+        <div class="panel">
+          <h2>Equipment</h2>
+          <div id="items"></div>
+          <div class="addrow ed"><button class="btn sm" id="addItem">+ Add item</button></div>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="panel">
+          <h2>Coins <span class="r muted" style="font-size:13px;letter-spacing:.04em;font-variant:normal;font-family:var(--type)">≈ <span data-c="gpTotal">0</span> gp</span></h2>
+          <div class="coins" id="coins"></div>
+        </div>
+        <div class="panel">
+          <h2>Magic Item Attunement</h2>
+          <div class="attune" id="attune"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= STORY ======================= -->
+  <section class="pane" id="pane-story" role="tabpanel">
+    <div class="grid g2">
+      <div class="stack">
+        <div class="panel"><h2>Backstory &amp; Personality</h2><textarea data-f="backstory" rows="8" style="width:100%" placeholder="Who is Nyx, and how did they end up here?"></textarea>
+          <div style="display:flex;gap:10px;align-items:baseline;margin-top:10px"><span class="lbl">Alignment</span><input data-f="alignment" style="max-width:220px"></div></div>
+        <div class="panel"><h2>Appearance</h2><textarea data-f="appearance" rows="5" style="width:100%" placeholder="Brass plating, glowing eyes, …"></textarea></div>
+      </div>
+      <div class="panel"><h2>Notes &amp; Session Log</h2><textarea data-f="notes" rows="22" style="width:100%" placeholder="Names, clues, debts, schematics…"></textarea></div>
+    </div>
+  </section>
+  </main>
+
+  <div class="orn">✦ ✦ ✦</div>
+  <div class="foot">Nyx · Autognome Artillerist · sheet autosaves to this browser — use ⋯ to keep a copy</div>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<aside id="logPanel" aria-label="Roll history">
+  <header><h3>Roll Log</h3><span><button class="btn sm" id="logClear">Clear</button> <button class="btn sm" id="logClose">Close</button></span></header>
+  <ol id="logList"></ol>
+</aside>
+
+<dialog id="menu">
+  <h3>Sheet Options</h3>
+  <div class="list">
+    <button class="btn solid" id="mHtml">Download a copy of this sheet (.html)</button>
+    <button class="btn" id="mExport">Export data (.json)</button>
+    <button class="btn" id="mImport">Import data (.json)…</button>
+    <input type="file" id="fileIn" accept="application/json,.json" hidden>
+    <button class="btn" id="mTheme">Theme: <span id="themeName">auto</span></button>
+    <button class="btn" id="mPrint">Print</button>
+    <button class="btn danger" id="mReset">Reset to original sheet</button>
+    <button class="btn" id="mClose">Close</button>
+  </div>
+  <p>Your changes are saved automatically in this browser. “Download a copy” bakes the current sheet into a fresh .html file you can keep, move, or open on another device.</p>
+</dialog>
+
+<script id="saved-data" type="application/json">null</script>
+<script>
+(() => {
+'use strict';
+const PRISTINE = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+const KEY = 'nyx-autognome-sheet-v1';
+const $  = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num = v => { const n = parseFloat(v); return Number.isFinite(n) ? n : 0; };
+const fmt = n => (n >= 0 ? '+' : '−') + Math.abs(n);
+const clone = o => JSON.parse(JSON.stringify(o));
+
+/* ------------------------------------------------------------------ data */
+const ABIL = [['str','Strength'],['dex','Dexterity'],['con','Constitution'],['int','Intelligence'],['wis','Wisdom'],['cha','Charisma']];
+const SKILLS = {
+  str:[['athletics','Athletics']],
+  dex:[['acrobatics','Acrobatics'],['sleight','Sleight of Hand'],['stealth','Stealth']],
+  con:[],
+  int:[['arcana','Arcana'],['history','History'],['investigation','Investigation'],['nature','Nature'],['religion','Religion']],
+  wis:[['animal','Animal Handling'],['insight','Insight'],['medicine','Medicine'],['perception','Perception'],['survival','Survival']],
+  cha:[['deception','Deception'],['intimidation','Intimidation'],['performance','Performance'],['persuasion','Persuasion']]
+};
+const SKILL_ABIL = {}; Object.entries(SKILLS).forEach(([a, l]) => l.forEach(([k, n]) => SKILL_ABIL[k] = [a, n]));
+const CONDITIONS = ['Blinded','Charmed','Deafened','Frightened','Grappled','Incapacitated','Invisible','Paralyzed','Petrified','Poisoned','Prone','Restrained','Stunned','Unconscious'];
+
+const DEFAULT = {
+  v:1, savedAt:0,
+  name:'Nyx', level:5, xp:'', cls:'Artificer', subclass:'Artillerist', species:'Autognome', background:'Criminal', alignment:'Neutral',
+  abil:{str:12,dex:14,con:14,int:16,wis:12,cha:8},
+  prof:{'save:int':1,'save:con':1,'skill:arcana':1,'skill:investigation':1,'skill:sleight':1,'skill:stealth':1},
+  alert:true, speed:'30', size:'S',
+  ac:{base:19, note:'Scale Mail 14 + Dex 2 + Shield 2 + Enhanced Defense 1'},
+  hp:{cur:39,max:39,temp:0}, hd:{max:5,spent:0,die:8}, death:{s:0,f:0}, insp:false,
+  fx:{shield:false}, conds:{}, exh:0, conc:'', spellBonus:0,
+  ui:{mode:0,bfs:false,tab:'combat',theme:'auto'},
+  attacks:[
+    {name:'Firebolt', bonus:'+6', notes:'Pistol, Fire · 120 ft', dmg:[{l:'Fire',f:'2d10+1d8'}]},
+    {name:'+1 Dagger', bonus:'+6', notes:'On kill, d6; if 6, d4 HP', dmg:[{l:'Piercing',f:'1d4+3'}]},
+    {name:'Arcane Firearm', bonus:'', notes:'Spell focus · add to damage spells', dmg:[{l:'Add to spell',f:'1d8'}]},
+    {name:'Force Ballista', bonus:'+5', notes:'Pushed 5′', dmg:[{l:'Force',f:'2d8'}]},
+    {name:'Green Flame Blade', bonus:'+6', notes:'5′ jump, fire damage', dmg:[{l:'Extra fire',f:'1d8'},{l:'Jump target',f:'1d8+3'}]},
+    {name:'Booming Blade', bonus:'+6', notes:'2d8 thunder if it moves', dmg:[{l:'On hit',f:'1d8'},{l:'If it moves',f:'2d8'}]}
+  ],
+  cannon:{on:false,hp:15,max:15,ac:18},
+  res:[
+    {id:'bfs', name:'Built for Success', max:'pb', used:0, reset:'long', note:'+1d4 to an attack roll, check or save. Uses = proficiency bonus.'},
+    {id:'recall', name:'Branch Recall', max:1, used:0, reset:'long', note:'A failed Int or Wis save can be treated as a success.'},
+    {id:'apt', name:'All-Purpose Tool cantrip', max:1, used:0, reset:'long', note:'Any spell list · lasts 8 hours.'},
+    {id:'cannon', name:'Eldritch Cannon (free cast)', max:1, used:0, reset:'long', note:'Otherwise costs a spell slot.'}
+  ],
+  defensesText:'Resistance: poison damage\nImmune: disease\nAdvantage on saves vs. poison & paralysis\nDarkvision\nNo need to eat, drink or breathe',
+  slots:{1:{t:4,u:0},2:{t:2,u:0},3:{t:0,u:0},4:{t:0,u:0},5:{t:0,u:0},6:{t:0,u:0},7:{t:0,u:0},8:{t:0,u:0},9:{t:0,u:0}},
+  spellGroups:[
+    {name:'Cantrips', spells:[
+      {lvl:0,name:'Mending',time:'1m',range:'Touch',notes:'1d8 + Con HP (Healing Machine)',dice:'1d8+con',atk:false},
+      {lvl:0,name:'Firebolt',time:'A',range:"120′",notes:'2d10 (+1d8) fire',dice:'2d10+1d8',atk:true},
+      {lvl:0,name:'Green Flame Blade',time:'A',range:'Self (5′)',notes:''},
+      {lvl:0,name:'Booming Blade',time:'A',range:'Self (5′)',notes:''}
+    ]},
+    {name:'Prepared (5)', spells:[
+      {lvl:1,name:'Cure Wounds',time:'A',range:'Touch',notes:'2d8 + Int, +2d8 per slot level',dice:'2d8+int'},
+      {lvl:1,name:'Feather Fall',time:'R',range:"60′",notes:'5 creatures, 1 minute'},
+      {lvl:1,name:'Detect Magic',time:'A',range:"Self (30′)",notes:'10 minutes',c:true,r:true},
+      {lvl:1,name:'Identify',time:'1m',range:'Touch',notes:'',r:true,m:true},
+      {lvl:2,name:'Alter Self',time:'A',range:'Self',notes:'1 hour',c:true}
+    ]},
+    {name:'Artificer Spells', spells:[
+      {lvl:1,name:'Shield',time:'R',range:'Self',notes:'+5 AC, 1 turn',fx:'shield'},
+      {lvl:1,name:'Thunderwave',time:'A',range:'Self (15′ cube)',notes:''},
+      {lvl:1,name:'Disguise Self',time:'A',range:'Self',notes:'1 hour'},
+      {lvl:2,name:'Scorching Ray',time:'A',range:"120′",notes:'3 rays, 2d6 fire each',dice:'2d6',atk:true},
+      {lvl:2,name:'Shatter',time:'A',range:"60′",notes:'3d8 thunder, Con save',dice:'3d8'}
+    ]}
+  ],
+  features:{
+    species:[
+      {n:'Armored Casing',t:'Base AC: 13 + Dex.'},
+      {n:'Built for Success',t:'+1d4 to attacks, checks and saves. Uses = proficiency bonus per long rest.'},
+      {n:'Healing Machine',t:'Mending → spend a Hit Die: Hit Die + Con HP. Healing spells work on me.'},
+      {n:'Mechanical Nature',t:'Resist poison, immune to disease, advantage on saves against poison and paralysis.'},
+      {n:"Sentry's Rest",t:'6-hour long rest, inert but conscious.'},
+      {n:'Specialized Design',t:'2 tool proficiencies.'},
+      {n:'Darkvision',t:''},
+      {n:'No Needs',t:'Do not need to eat, drink, or breathe.'}
+    ],
+    cls:[
+      {n:'Eldritch Cannon',t:'AC 18, HP 15.'},
+      {n:'Flamethrower',t:"15′ cone of fire, Dex save, 2d8 fire damage (half on a save)."},
+      {n:'Force Ballista',t:"Ranged spell attack, 120′, 2d8 force damage, target pushed 5′."},
+      {n:'Protector',t:"It and everyone I choose within 10′ gain 1d8 + Int temp HP."},
+      {n:'Homebrew: Observer Drone',t:'No combat abilities.'},
+      {n:'Arms',t:'Torch; Grappling Hook schematic.'},
+      {n:'Spell Scrolls',t:'Can craft spell scrolls with Arcana.'},
+      {n:'Horse-Handling',t:'Skill: 9.'}
+    ],
+    infusions:[
+      {n:'Armor of Tools',t:'+Int to ability checks with integrated tools (PB + Int + Int).',star:true},
+      {n:'Enhanced Defense',t:'+1 AC on shield / armor.',star:true},
+      {n:'Enhanced Arcane Focus',t:'+1 spell attack, ignore half cover.'},
+      {n:'Enhanced Weapon',t:'+1 to attack and damage.'}
+    ],
+    feats:[
+      {n:'Alert',t:'Add PB to Initiative; can swap Initiative with an ally.'},
+      {n:'Arcane Firearm',t:'Add 1d8 to damage spells.'},
+      {n:'Branch Recall',t:'1 / long rest: an Int or Wis save failure can be treated as a success.'},
+      {n:'+2 All-Purpose Tool',t:'+2 to spell attack & DC for Artificer spells. 1 / day: a cantrip from any list for 8 hours.'}
+    ]
+  },
+  tools:[
+    {n:"Smith's Tools",a:'int',p:1,i:0,b:0},{n:"Carpenter's Tools",a:'int',p:1,i:0,b:0},{n:"Woodcarver's Tools",a:'int',p:1,i:0,b:0},
+    {n:"Thieves' Tools",a:'dex',p:1,i:0,b:1},{n:"Tinker's Tools",a:'int',p:1,i:0,b:0},{n:"Glassblower's Tools",a:'int',p:1,i:0,b:0}
+  ],
+  armorTrain:{Light:1,Medium:1,Heavy:0,Shields:1},
+  weaponsText:'Simple weapons',
+  languages:'Common, Gnomish',
+  items:[
+    {n:'Daggers',q:2,note:'',dice:''},
+    {n:'Crowbar',q:1,note:'Advantage on relevant Str checks',dice:''},
+    {n:"Traveler's Clothes",q:1,note:'',dice:''},
+    {n:'Pouches',q:2,note:'',dice:''},
+    {n:'Scale Mail',q:1,note:'AC 14 + Dex · disadvantage on Stealth',dice:''},
+    {n:'Shield',q:1,note:'',dice:''},
+    {n:"Dungeoneer's Pack",q:1,note:'',dice:''},
+    {n:'Standard Healing Potion',q:1,note:'Heals 2d4 + 4',dice:'2d4+4'}
+  ],
+  coins:{cp:10,sp:5,ep:0,gp:4,pp:0},
+  attune:[{on:false,n:''},{on:false,n:''},{on:false,n:''}],
+  backstory:"Findle Gearhart's sketched plans for the autognome factory",
+  appearance:'', notes:''
+};
+
+/* ----------------------------------------------------------------- state */
+function merge(a, b){
+  for(const k in b){
+    if(b[k] && typeof b[k] === 'object' && !Array.isArray(b[k]) && a[k] && typeof a[k] === 'object' && !Array.isArray(a[k])) merge(a[k], b[k]);
+    else a[k] = b[k];
+  }
+  return a;
+}
+function readEmbedded(){ try{ const t = $('#saved-data').textContent.trim(); return t && t !== 'null' ? JSON.parse(t) : null; }catch{ return null; } }
+function readLocal(){ try{ const t = localStorage.getItem(KEY); return t ? JSON.parse(t) : null; }catch{ return null; } }
+function load(){
+  const e = readEmbedded(), l = readLocal();
+  const pick = e && l ? ((l.savedAt||0) >= (e.savedAt||0) ? l : e) : (l || e);
+  return pick ? merge(clone(DEFAULT), pick) : clone(DEFAULT);
+}
+let S = load();
+let crit = {};        // attack index -> last roll was a natural 20
+let storageOk = true;
+
+const getPath = (o, p) => p.split('.').reduce((x, k) => x == null ? x : x[k], o);
+function setPath(o, p, v){ const ks = p.split('.'); const last = ks.pop(); const t = ks.reduce((x, k) => x[k], o); t[last] = v; }
+
+let saveTimer;
+function save(){
+  clearTimeout(saveTimer);
+  const ss = $('#saveState'); ss.textContent = 'saving…'; ss.classList.remove('bad');
+  saveTimer = setTimeout(() => {
+    S.savedAt = Date.now();
+    try{ localStorage.setItem(KEY, JSON.stringify(S)); storageOk = true; ss.textContent = 'saved ✓'; }
+    catch{ storageOk = false; ss.textContent = 'not saving — export!'; ss.classList.add('bad'); }
+  }, 250);
+}
+
+/* ------------------------------------------------------------ computed */
+const pb   = () => Math.ceil(Math.max(1, num(S.level)) / 4) + 1;
+const mod  = a => Math.floor((num(S.abil[a]) - 10) / 2);
+const profOf = key => (S.prof[key] || 0) * pb();
+const saveB  = a => mod(a) + profOf('save:' + a);
+const skillB = k => mod(SKILL_ABIL[k][0]) + profOf('skill:' + k);
+const initB  = () => mod('dex') + (S.alert ? pb() : 0);
+const ppV    = () => 10 + skillB('perception');
+const acV    = () => num(S.ac.base) + (S.fx.shield ? 5 : 0);
+const spAtk  = () => mod('int') + pb() + num(S.spellBonus);
+const spDC   = () => 8 + mod('int') + pb() + num(S.spellBonus);
+const resMax = r => r.max === 'pb' ? pb() : num(r.max);
+const hdLeft = () => Math.max(0, num(S.hd.max) - num(S.hd.spent));
+const gpTotal = () => { const c = S.coins; return Math.round((num(c.cp)/100 + num(c.sp)/10 + num(c.ep)/2 + num(c.gp) + num(c.pp)*10) * 100) / 100; };
+const ballistaBonus = () => (S.attacks.find(a => /ballista/i.test(a.name)) || {bonus:'+' + spAtk()}).bonus || fmt(spAtk());
+
+function calc(key){
+  const [t, k] = key.split(':');
+  switch(t){
+    case 'pb': return fmt(pb());
+    case 'mod': return fmt(mod(k));
+    case 'save': return fmt(saveB(k));
+    case 'skill': return fmt(skillB(k));
+    case 'init': return fmt(initB());
+    case 'pp': return ppV();
+    case 'ac': return acV();
+    case 'dc': return spDC();
+    case 'spatk': return fmt(spAtk());
+    case 'hdLeft': return hdLeft();
+    case 'hdMax': return `/ ${num(S.hd.max)}d${S.hd.die}`;
+    case 'gpTotal': return gpTotal();
+    case 'ballistaBonus': return ballistaBonus();
+    case 'tool': { const T = S.tools[k]; return fmt(mod(T.a) + (T.p ? pb() : 0) + (T.i ? mod('int') : 0)); }
+  }
+  return '';
+}
+
+/* ----------------------------------------------------------------- dice */
+const rnd = n => { if(window.crypto?.getRandomValues){ const a = new Uint32Array(1); const lim = Math.floor(4294967296 / n) * n; do{ crypto.getRandomValues(a); }while(a[0] >= lim); return a[0] % n + 1; } return 1 + Math.floor(Math.random() * n); };
+function rollExpr(expr, doubleDice){
+  let e = String(expr).toLowerCase()
+    .replace(/\b(str|dex|con|int|wis|cha)\b/g, m => '+' + mod(m))
+    .replace(/\bpb\b/g, '+' + pb())
+    .replace(/[−–]/g, '-').replace(/\s+/g, '')
+    .replace(/\++/g, '+').replace(/\+-/g, '-').replace(/-\+/g, '-').replace(/--/g, '+');
+  let total = 0; const parts = []; let m; const re = /([+-]?)(?:(\d*)d(\d+)|(\d+))/g; let any = false;
+  while((m = re.exec(e))){
+    any = true;
+    const sign = m[1] === '-' ? -1 : 1;
+    if(m[3]){
+      let n = num(m[2] || 1) * (doubleDice ? 2 : 1); const sides = num(m[3]);
+      if(n > 200 || sides > 1000){ continue; }
+      const r = Array.from({length:n}, () => rnd(sides)); const sum = r.reduce((a, b) => a + b, 0);
+      total += sign * sum; parts.push(`${sign < 0 ? '−' : (parts.length ? '+ ' : '')}${n}d${sides} [${r.join(', ')}]`);
+    }else{
+      total += sign * num(m[4]); parts.push(`${sign < 0 ? '−' : (parts.length ? '+ ' : '')}${m[4]}`);
+    }
+  }
+  return any ? {total, detail: parts.join(' ')} : null;
+}
+
+let toastTimer;
+function toast({label, total, detail, cls = ''}){
+  const t = $('#toast');
+  t.className = 'show ' + cls;
+  t.innerHTML = `<div class="tl">${esc(label)}</div>` + (total !== undefined ? `<div class="tt">${esc(total)}</div>` : '') + (detail ? `<div class="td">${esc(detail)}</div>` : '');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 7000);
+  if(total !== undefined) logRoll(label, total, detail);
+}
+function say(msg, sub){
+  const t = $('#toast'); t.className = 'show msg';
+  t.innerHTML = `<div class="tt">${esc(msg)}</div>` + (sub ? `<div class="td">${esc(sub)}</div>` : '');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 5000);
+}
+let LOG = []; try{ LOG = JSON.parse(sessionStorage.getItem('nyx-log') || '[]'); }catch{}
+function logRoll(label, total, detail){
+  LOG.unshift({label, total, detail}); LOG = LOG.slice(0, 60);
+  try{ sessionStorage.setItem('nyx-log', JSON.stringify(LOG)); }catch{}
+  renderLog();
+}
+function renderLog(){
+  $('#logList').innerHTML = LOG.length ? LOG.map(l => `<li><span class="ll">${esc(l.label)}</span><span class="lt">${esc(l.total)}</span><span class="ld">${esc(l.detail || '')}</span></li>`).join('') : '<li class="muted">No rolls yet.</li>';
+}
+
+/* d20 test with advantage / Built for Success / exhaustion */
+function d20(label, bonus, kind = 'check', atkIdx = null){
+  const mode = S.ui.mode; const dice = [rnd(20)]; if(mode) dice.push(rnd(20));
+  const kept = mode === 1 ? Math.max(...dice) : mode === -1 ? Math.min(...dice) : dice[0];
+  let total = kept + bonus; const bits = [`d20 [${dice.join(', ')}${mode ? ` → ${kept}` : ''}]`];
+  if(bonus) bits.push(bonus < 0 ? `− ${-bonus}` : `+ ${bonus}`);
+  if(S.exh){ total -= 2 * S.exh; bits.push(`− ${2 * S.exh} exhaustion`); }
+  if(S.ui.bfs){
+    const r = S.res.find(x => x.id === 'bfs');
+    if(r && resMax(r) - num(r.used) > 0){ const d = rnd(4); total += d; bits.push(`+ 1d4 [${d}]`); r.used = num(r.used) + 1; S.ui.bfs = false; renderResources(); }
+    else { S.ui.bfs = false; bits.push('(no Built for Success uses left)'); }
+    refreshTray();
+  }
+  const modeTxt = mode === 1 ? ' (adv)' : mode === -1 ? ' (disadv)' : '';
+  let cls = '';
+  if(kept === 20){ cls = 'crit'; if(atkIdx !== null) crit[atkIdx] = true; }
+  else if(kept === 1) cls = 'fumble';
+  else if(atkIdx !== null) crit[atkIdx] = false;
+  toast({label: label + modeTxt + (kept === 20 ? ' — NATURAL 20' : kept === 1 ? ' — natural 1' : ''), total, detail: bits.join(' '), cls});
+  save();
+  return total;
+}
+function dmgRoll(label, formula, atkIdx = null){
+  const c = atkIdx !== null && crit[atkIdx];
+  const r = rollExpr(formula, c);
+  if(!r){ say('Could not read “' + formula + '”'); return; }
+  toast({label: label + (c ? ' — CRITICAL (dice doubled)' : ''), total: r.total, detail: r.detail, cls: c ? 'crit' : ''});
+  if(atkIdx !== null) crit[atkIdx] = false;
+  return r.total;
+}
+
+function rollKey(key){
+  const [t, k] = key.split(':');
+  if(t === 'init') return d20('Initiative', initB());
+  if(t === 'check') return d20(ABIL.find(a => a[0] === k)[1] + ' check', mod(k));
+  if(t === 'save')  return d20(ABIL.find(a => a[0] === k)[1] + ' save', saveB(k), 'save');
+  if(t === 'skill') return d20(SKILL_ABIL[k][1], skillB(k));
+  if(t === 'spatk') return d20('Spell attack', spAtk(), 'attack');
+  if(t === 'tool'){ const T = S.tools[k]; if(T.b) say(T.n + ' are broken', 'Repair them before using them.'); return d20(T.n, num(calc(key).replace('−','-'))); }
+}
+
+/* -------------------------------------------------------------- binding */
+function bindAll(root = document){
+  $$('[data-f]', root).forEach(el => {
+    const v = getPath(S, el.dataset.f);
+    if(el.type === 'checkbox') el.checked = !!v;
+    else if(el.isContentEditable) { if(el.textContent !== String(v ?? '')) el.textContent = v ?? ''; }
+    else el.value = v ?? '';
+  });
+}
+document.addEventListener('input', e => {
+  const el = e.target.closest('[data-f]'); if(!el) return;
+  let v;
+  if(el.type === 'checkbox') v = el.checked;
+  else if(el.type === 'number') v = el.value === '' ? '' : Number(el.value);
+  else if(el.isContentEditable) v = el.textContent;
+  else v = el.value;
+  setPath(S, el.dataset.f, v);
+  changed(el);
+});
+document.addEventListener('change', e => {
+  const el = e.target.closest('[data-f]'); if(!el) return;
+  if(el.dataset.f === 'level'){ S.level = Math.min(20, Math.max(1, num(S.level))); bindAll(); renderResources(); }
+  if(el.hasAttribute('data-hp')){ clampHp(); bindAll(); }
+  if(el.dataset.f === 'cannon.hp' || el.dataset.f === 'cannon.max'){ S.cannon.hp = Math.min(num(S.cannon.max), Math.max(0, num(S.cannon.hp))); bindAll(); }
+  if(el.dataset.f === 'defensesText') renderDefenses();
+  if(/^(tools|items|attune|coins)/.test(el.dataset.f) || el.dataset.f === 'spellBonus') refresh();
+  refresh();
+});
+function changed(){ save(); refresh(); }
+
+function clampHp(){
+  S.hp.max = Math.max(1, num(S.hp.max)); S.hp.cur = Math.min(S.hp.max, Math.max(0, num(S.hp.cur))); S.hp.temp = Math.max(0, num(S.hp.temp));
+  if(S.hp.cur > 0){ S.death.s = 0; S.death.f = 0; }
+}
+
+/* -------------------------------------------------------------- refresh */
+function refresh(){
+  $$('[data-c]').forEach(el => { const v = calc(el.dataset.c); if(el.textContent !== String(v)) el.textContent = v; });
+  const pct = Math.max(0, Math.min(100, num(S.hp.cur) / Math.max(1, num(S.hp.max)) * 100));
+  const bar = $('[data-bar=hp]'); bar.style.width = pct + '%'; bar.className = pct <= 25 ? 'low' : pct <= 50 ? 'mid' : '';
+  const tb = $('[data-bar=temp]'); tb.style.width = Math.min(100, num(S.hp.temp) / Math.max(1, num(S.hp.max)) * 100) + '%';
+  $('#insp').classList.toggle('on', !!S.insp); $('#insp').setAttribute('aria-pressed', !!S.insp);
+  $('#fxShield').classList.toggle('on', !!S.fx.shield);
+  $('#exhVal').textContent = S.exh;
+  $('#exhNote').textContent = S.exh ? `−${2 * S.exh} to d20 Tests · −${5 * S.exh} ft speed` : 'None';
+  renderDeath();
+  $$('[data-prof]').forEach(b => { const v = S.prof[b.dataset.prof] || 0; b.className = 'pm p' + v; b.setAttribute('aria-label', ['not proficient','proficient','expertise'][v]); });
+  refreshTray();
+}
+function refreshTray(){
+  $$('[data-mode]').forEach(b => b.classList.toggle('on', num(b.dataset.mode) === S.ui.mode));
+  const r = S.res.find(x => x.id === 'bfs');
+  $('#bfsChip').style.display = r ? '' : 'none';
+  if(r){ $('#bfsLeft').textContent = `(${Math.max(0, resMax(r) - num(r.used))}/${resMax(r)})`; $('#bfsChip').classList.toggle('on', !!S.ui.bfs); }
+}
+
+/* ------------------------------------------------------------ renderers */
+function renderDeath(){
+  const wrap = $('#deathSaves'); const down = num(S.hp.cur) === 0;
+  wrap.classList.toggle('dim', !down);
+  const row = (k, cls, lb) => `<span class="lb">${lb}</span><span class="row">${[0,1,2].map(i => `<button class="pip sm ${cls} ${i < S.death[k] ? '' : 'used'}" data-death="${k}" data-i="${i}" aria-label="${lb} ${i+1}"></button>`).join('')}</span>`;
+  wrap.innerHTML = `<div style="display:grid;gap:3px"><div class="ds">${row('s', 'win', 'pass')}</div><div class="ds">${row('f', 'fail', 'fail')}</div></div><button class="btn sm" id="deathRoll" title="Roll a death saving throw">Death save</button>`;
+}
+function renderAttacks(){
+  $('#attacks').innerHTML = S.attacks.map((a, i) => {
+    const hasB = String(a.bonus).trim() !== '';
+    const isPlain = /^[+−-]?\d+$/.test(String(a.bonus).trim());
+    return `
+    <div class="atk">
+      <div class="pl"><div class="an">${esc(a.name)}</div><div class="note">${esc(a.notes)}</div></div>
+      <div class="pl hit">${hasB && isPlain ? `<button class="roll big" data-atk="${i}" title="Roll to hit">${esc(a.bonus.toString().replace('-', '−'))}</button>` : `<span class="muted">${esc(a.bonus) || '—'}</span>`}</div>
+      <div class="pl dm">${a.dmg.map((d, j) => `<button class="roll dice" data-dmg="${i}.${j}" title="Roll damage"><small>${esc(d.l)}</small>${esc(d.f.replace(/\+/g, ' + ').replace(/-/g, ' − ').replace(/  +/g, ' ').trim())}</button>`).join('')}</div>
+      <div class="ed" style="grid-column:1/-1">
+        <div class="edrow"><input data-f="attacks.${i}.name" value="${esc(a.name)}" placeholder="Name" aria-label="Attack name"><input class="n" data-f="attacks.${i}.bonus" value="${esc(a.bonus)}" placeholder="+0" aria-label="Attack bonus"><button class="x" data-del="attacks.${i}" aria-label="Delete attack">×</button></div>
+        <div class="edrow" style="margin-top:4px"><input data-f="attacks.${i}.notes" value="${esc(a.notes)}" placeholder="Notes" aria-label="Notes"></div>
+        ${a.dmg.map((d, j) => `<div class="edrow" style="margin-top:4px"><input data-f="attacks.${i}.dmg.${j}.l" value="${esc(d.l)}" placeholder="Label"><input data-f="attacks.${i}.dmg.${j}.f" value="${esc(d.f)}" placeholder="2d6+3  (int, con, pb ok)"><button class="x" data-del="attacks.${i}.dmg.${j}" aria-label="Remove damage">×</button></div>`).join('')}
+        <button class="btn sm" style="margin-top:6px" data-add="attacks.${i}.dmg">+ damage roll</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function renderResources(){
+  $('#resources').innerHTML = S.res.map((r, i) => {
+    const max = resMax(r), left = Math.max(0, max - num(r.used));
+    return `<div class="res">
+      <div class="pl rn">${esc(r.name)}</div>
+      <div class="pl"><div class="pips">${Array.from({length:max}, (_, k) => `<button class="pip ${k < left ? '' : 'used'}" data-res="${i}.${k}" aria-label="${esc(r.name)} use ${k+1}"></button>`).join('')}</div></div>
+      <div class="pl rd">${esc(r.note)} <span class="rt">· per ${r.reset} rest</span></div>
+      <div class="ed" style="grid-column:1/-1"><div class="edrow"><input data-f="res.${i}.name" value="${esc(r.name)}" aria-label="Name"><input class="n" data-f="res.${i}.max" value="${esc(r.max)}" title="Uses (or pb)" aria-label="Uses"><select data-f="res.${i}.reset" aria-label="Resets on"><option ${r.reset==='long'?'selected':''} value="long">long</option><option ${r.reset==='short'?'selected':''} value="short">short</option></select><button class="x" data-del="res.${i}" aria-label="Delete">×</button></div><div class="edrow" style="margin-top:4px"><input data-f="res.${i}.note" value="${esc(r.note)}" aria-label="Description"></div></div>
+    </div>`;
+  }).join('');
+  refreshTray();
+}
+function renderConds(){
+  $('#conds').innerHTML = CONDITIONS.map(c => `<button class="chip ${S.conds[c] ? 'on' : ''}" data-cond="${c}" aria-pressed="${!!S.conds[c]}">${c}</button>`).join('');
+}
+function renderDefenses(){
+  $('#defTags').innerHTML = String(S.defensesText || '').split('\n').filter(x => x.trim()).map(x => `<span class="tag">${esc(x.trim())}</span>`).join('');
+}
+function renderAbilities(){
+  $('#abils').innerHTML = ABIL.map(([a, n]) => `
+    <div class="panel ab">
+      <div class="abhead"><span class="n">${n}</span><input class="sc" type="number" data-f="abil.${a}" aria-label="${n} score"><button class="roll big" data-roll="check:${a}" data-c="mod:${a}" title="${n} check">+0</button></div>
+      <div class="rowk sv"><button class="pm" data-prof="save:${a}" data-toggle="1"></button><span class="nm2">Saving Throw</span><button class="roll" data-roll="save:${a}" data-c="save:${a}">+0</button></div>
+      ${SKILLS[a].map(([k, sn]) => `<div class="rowk"><button class="pm" data-prof="skill:${k}"></button><span class="nm2">${sn}</span><button class="roll" data-roll="skill:${k}" data-c="skill:${k}">+0</button></div>`).join('')}
+    </div>`).join('');
+  bindAll($('#abils'));
+}
+function renderTools(){
+  $('#tools').innerHTML = S.tools.map((t, i) => `
+    <div class="tr">
+      <button class="pm ${t.p ? 'p1' : ''}" data-toolprof="${i}" aria-label="proficient"></button>
+      <span>${esc(t.n)}${t.b ? ' <span class="tag" style="border-color:var(--danger);color:var(--danger);margin:0 0 0 6px">broken</span>' : ''}${t.i ? ' <span class="tag" style="margin:0 0 0 6px">integrated</span>' : ''}</span>
+      <span class="sel ed"><select data-f="tools.${i}.a" aria-label="Ability">${ABIL.map(([k]) => `<option value="${k}" ${t.a === k ? 'selected' : ''}>${k.toUpperCase()}</option>`).join('')}</select></span>
+      <span class="flags ed edflex"><label><input type="checkbox" data-f="tools.${i}.i" ${t.i ? 'checked' : ''} style="width:auto"> integrated</label><label><input type="checkbox" data-f="tools.${i}.b" ${t.b ? 'checked' : ''} style="width:auto"> broken</label><button class="x" data-del="tools.${i}">×</button></span>
+      <button class="roll pl" data-roll="tool:${i}" data-c="tool:${i}">+0</button>
+    </div>`).join('');
+  $$('#tools .tr').forEach(r => { const ed = $$('.ed', r); });
+}
+function renderTraining(){
+  $('#armorTrain').innerHTML = Object.keys(S.armorTrain).map(k => `<button class="chip good ${S.armorTrain[k] ? 'on' : ''}" data-armor="${k}" aria-pressed="${!!S.armorTrain[k]}">${k}</button>`).join('');
+}
+function renderSlots(){
+  $('#slots').innerHTML = Object.keys(S.slots).filter(l => S.slots[l].t > 0 || document.body.classList.contains('editing')).map(l => {
+    const s = S.slots[l], left = Math.max(0, num(s.t) - num(s.u));
+    return `<div class="slot ${left ? '' : 'empty'}"><div class="sh"><b>Level ${l}</b><span>${left}/<input class="tot" type="number" min="0" max="9" data-f="slots.${l}.t" value="${s.t}" aria-label="Total level ${l} slots"><span class="pl">${s.t}</span></span></div>
+      <div class="pips">${Array.from({length:num(s.t)}, (_, k) => `<button class="pip ${k < left ? '' : 'used'}" data-slot="${l}.${k}" aria-label="Level ${l} slot ${k+1}"></button>`).join('')}</div></div>`;
+  }).join('');
+}
+function renderSpells(){
+  $('#spells').innerHTML = S.spellGroups.map((g, gi) => `
+    <div class="spgroup"><h3><span class="pl">${esc(g.name)}</span><input class="ed" data-f="spellGroups.${gi}.name" value="${esc(g.name)}" aria-label="Group name"><button class="x ed" data-del="spellGroups.${gi}" aria-label="Delete group">×</button></h3>
+    ${g.spells.map((s, si) => {
+      const p = `spellGroups.${gi}.spells.${si}`;
+      const lvl = num(s.lvl);
+      const tags = (s.c ? '<span class="tg c" title="Concentration">C</span>' : '') + (s.r ? '<span class="tg" title="Ritual">R</span>' : '') + (s.m ? '<span class="tg" title="Material">M</span>' : '');
+      return `<div class="sp">
+        <span class="lv">${lvl ? lvl : 'C'}</span>
+        <span class="sn">${esc(s.name)} ${tags}</span>
+        <span class="meta"><span class="tm">${esc(s.time)}</span><span class="rg">${esc(s.range)}</span></span>
+        <span class="nt">${esc(s.notes)}</span>
+        <span class="bt">
+          ${s.atk ? `<button class="roll" data-spell-atk="${gi}.${si}" title="Roll spell attack">${fmt(spAtk())}</button>` : ''}
+          ${s.dice ? `<button class="roll dice" data-spell-dice="${gi}.${si}" title="Roll">${esc(s.dice.replace(/\+/g,' + '))}</button>` : ''}
+          ${lvl ? `<button class="btn sm" data-cast="${gi}.${si}" title="Cast using a spell slot">Cast</button>` : s.c ? `<button class="btn sm" data-cast="${gi}.${si}">Focus</button>` : ''}
+          ${s.r && lvl ? `<button class="btn sm" data-ritual="${gi}.${si}" title="Cast as a ritual (+10 min, no slot)">Ritual</button>` : ''}
+        </span>
+      </div>
+      <div class="sped">
+        <input data-f="${p}.lvl" type="number" min="0" max="9" value="${esc(s.lvl)}" placeholder="Lvl" aria-label="Level (0 = cantrip)">
+        <input data-f="${p}.name" value="${esc(s.name)}" placeholder="Name" aria-label="Name">
+        <input data-f="${p}.time" value="${esc(s.time)}" placeholder="Time" aria-label="Casting time">
+        <input data-f="${p}.range" value="${esc(s.range)}" placeholder="Range" aria-label="Range">
+        <input data-f="${p}.notes" value="${esc(s.notes)}" placeholder="Notes" aria-label="Notes">
+        <input data-f="${p}.dice" value="${esc(s.dice || '')}" placeholder="Dice" aria-label="Dice to roll">
+        <button class="x" data-del="${p}" aria-label="Delete spell">×</button>
+        <div class="fl" style="grid-column:2/-1"><label><input type="checkbox" data-f="${p}.c" ${s.c?'checked':''}>C</label><label><input type="checkbox" data-f="${p}.r" ${s.r?'checked':''}>R</label><label><input type="checkbox" data-f="${p}.m" ${s.m?'checked':''}>M</label><label><input type="checkbox" data-f="${p}.atk" ${s.atk?'checked':''}>attack roll</label></div>
+      </div>`;
+    }).join('')}
+    <div class="ed"><button class="btn sm" style="margin-top:6px" data-addspell="${gi}">+ spell in “${esc(g.name)}”</button></div></div>`).join('');
+}
+function renderFeatures(){
+  const sections = [['species','Species Traits'],['cls','Class Features'],['infusions','Infusions'],['feats','Feats']];
+  $('#featGrid').innerHTML = sections.map(([k, title]) => `
+    <div class="panel"><h2>${title}</h2>
+      <div class="feats">${S.features[k].map((f, i) => `
+        <div class="ft">
+          <div class="pl"><h4>${esc(f.n)}${f.star ? ' <span class="star" title="Marked ** on the original sheet">★</span>' : ''}</h4>${f.t ? `<p>${esc(f.t)}</p>` : ''}</div>
+          <div class="ed"><div class="edrow"><input data-f="features.${k}.${i}.n" value="${esc(f.n)}" aria-label="Feature name"><button class="x" data-del="features.${k}.${i}" aria-label="Delete">×</button></div><textarea data-f="features.${k}.${i}.t" rows="2" style="width:100%;margin-top:4px" aria-label="Description">${esc(f.t)}</textarea></div>
+        </div>`).join('')}</div>
+      <div class="addrow ed"><button class="btn sm" data-addfeat="${k}">+ Add</button></div>
+    </div>`).join('');
+}
+function renderItems(){
+  $('#items').innerHTML = S.items.map((it, i) => `
+    <div class="item">
+      <div><div class="pl in">${esc(it.n)}</div><div class="pl inote">${esc(it.note)}</div>
+        <div class="ed"><div class="edrow"><input data-f="items.${i}.n" value="${esc(it.n)}" aria-label="Item"><input data-f="items.${i}.dice" value="${esc(it.dice)}" class="n" placeholder="dice" title="Dice to roll when used (e.g. 2d4+4)"><button class="x" data-del="items.${i}">×</button></div><div class="edrow" style="margin-top:4px"><input data-f="items.${i}.note" value="${esc(it.note)}" placeholder="Notes"></div></div></div>
+      <div class="iq">
+        ${it.dice ? `<button class="btn sm" data-use="${i}" ${num(it.q) < 1 ? 'disabled' : ''}>Use</button>` : ''}
+        <button class="btn sm" data-qty="${i}.-1" aria-label="Decrease">−</button><b>${num(it.q)}</b><button class="btn sm" data-qty="${i}.1" aria-label="Increase">+</button>
+      </div>
+    </div>`).join('');
+}
+function renderCoins(){
+  const names = {cp:'Copper',sp:'Silver',ep:'Electrum',gp:'Gold',pp:'Platinum'};
+  $('#coins').innerHTML = Object.keys(names).map(k => `<div class="coin"><span class="lbl">${k.toUpperCase()}</span><input type="number" data-f="coins.${k}" value="${num(S.coins[k])}" aria-label="${names[k]}"><div class="st"><button class="btn sm" data-coin="${k}.-1" aria-label="Minus one ${names[k]}">−</button><button class="btn sm" data-coin="${k}.1" aria-label="Plus one ${names[k]}">+</button></div></div>`).join('');
+}
+function renderAttune(){
+  $('#attune').innerHTML = S.attune.map((a, i) => `<label><button class="pip sm ${a.on ? '' : 'used'}" data-attune="${i}" aria-label="Attuned"></button><input data-f="attune.${i}.n" value="${esc(a.n)}" placeholder="Empty slot" aria-label="Attuned item ${i+1}"></label>`).join('');
+}
+function renderAll(){
+  bindAll(); renderAttacks(); renderResources(); renderConds(); renderDefenses(); renderAbilities(); renderTools(); renderTraining();
+  renderSlots(); renderSpells(); renderFeatures(); renderItems(); renderCoins(); renderAttune(); renderLog(); refresh();
+}
+
+/* -------------------------------------------------------------- actions */
+function applyDamage(n){
+  n = Math.max(0, Math.floor(n)); if(!n) return;
+  let rest = n; const t = Math.min(num(S.hp.temp), rest); S.hp.temp = num(S.hp.temp) - t; rest -= t;
+  const before = num(S.hp.cur); S.hp.cur = Math.max(0, before - rest);
+  const msgs = [`${n} damage`];
+  if(t) msgs.push(`${t} soaked by temp HP`);
+  if(before > 0 && S.hp.cur === 0) msgs.unshift('Nyx is down!');
+  if(before === 0){ S.death.f = Math.min(3, S.death.f + 1); msgs.push('Damage at 0 HP: death save failure'); }
+  if(S.conc){ msgs.push(`Concentration on ${S.conc}: Con save DC ${Math.max(10, Math.floor(n / 2))}`); }
+  say(msgs[0], msgs.slice(1).join(' · '));
+}
+function applyHeal(n){
+  n = Math.max(0, Math.floor(n)); if(!n) return;
+  S.hp.cur = Math.min(num(S.hp.max), num(S.hp.cur) + n); if(S.hp.cur > 0){ S.death.s = 0; S.death.f = 0; }
+  say(`Healed ${n}`, `${S.hp.cur} / ${S.hp.max} HP`);
+}
+function spendSlot(l){
+  for(let k = l; k <= 9; k++){ const s = S.slots[k]; if(s && num(s.t) - num(s.u) > 0){ s.u = num(s.u) + 1; return k; } }
+  return 0;
+}
+function shortRest(){
+  S.res.forEach(r => { if(r.reset === 'short') r.used = 0; });
+  renderResources(); save();
+  say('Short rest', `Spend Hit Dice to heal (${hdLeft()} left). Short-rest features restored.`);
+}
+function longRest(){
+  if(!confirm('Take a long rest? This restores HP, Hit Dice, spell slots and daily features.')) return;
+  S.hp.cur = num(S.hp.max); S.hp.temp = 0; S.hd.spent = 0; S.death = {s:0,f:0};
+  Object.values(S.slots).forEach(s => s.u = 0);
+  S.res.forEach(r => r.used = 0);
+  S.cannon.hp = num(S.cannon.max); S.fx.shield = false; S.conc = ''; S.ui.bfs = false;
+  S.exh = Math.max(0, S.exh - 1);
+  renderAll(); save();
+  say('Long rest complete', "Sentry's Rest: 6 hours, inert but conscious.");
+}
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('button, .chip, [data-tab]'); if(!t) return;
+  const d = t.dataset;
+
+  if(d.tab){ setTab(d.tab); return; }
+  if(d.roll){ rollKey(d.roll); return; }
+  if(d.mode !== undefined){ S.ui.mode = num(d.mode); refreshTray(); save(); return; }
+  if(d.die){ const n = num(d.die); const r = rnd(n); toast({label: 'd' + n, total: r, detail: ''}); return; }
+  if(d.hpAct){
+    const n = num($('#hpAmt').value); if(!n) { $('#hpAmt').focus(); return; }
+    if(d.hpAct === 'dmg') applyDamage(n); else if(d.hpAct === 'heal') applyHeal(n); else { S.hp.temp = Math.max(num(S.hp.temp), n); say(`Temp HP: ${S.hp.temp}`); }
+    $('#hpAmt').value = ''; bindAll(); refresh(); save(); return;
+  }
+  if(t.id === 'hdSpend'){
+    if(hdLeft() < 1){ say('No Hit Dice left'); return; }
+    S.hd.spent = num(S.hd.spent) + 1;
+    const r = rollExpr(`1d${S.hd.die}+con`);
+    toast({label: 'Hit Die', total: r.total, detail: r.detail});
+    S.hp.cur = Math.min(num(S.hp.max), num(S.hp.cur) + Math.max(0, r.total)); if(S.hp.cur > 0){ S.death = {s:0,f:0}; }
+    bindAll(); refresh(); save(); return;
+  }
+  if(t.id === 'deathRoll'){
+    const r = rnd(20); let msg = '', cls = '';
+    if(r === 20){ S.hp.cur = 1; S.death = {s:0,f:0}; msg = 'Natural 20 — back up with 1 HP!'; cls = 'crit'; }
+    else if(r === 1){ S.death.f = Math.min(3, S.death.f + 2); msg = 'Natural 1 — two failures'; cls = 'fumble'; }
+    else if(r >= 10){ S.death.s = Math.min(3, S.death.s + 1); msg = 'Success'; }
+    else { S.death.f = Math.min(3, S.death.f + 1); msg = 'Failure'; }
+    if(S.death.s >= 3){ msg += ' — stable'; }
+    if(S.death.f >= 3){ msg += ' — Nyx has fallen'; }
+    toast({label: 'Death save', total: r, detail: msg, cls}); bindAll(); refresh(); save(); return;
+  }
+  if(d.death){ const k = d.death, i = num(d.i); S.death[k] = S.death[k] === i + 1 ? i : i + 1; refresh(); save(); return; }
+  if(t.id === 'insp'){ S.insp = !S.insp; refresh(); save(); return; }
+  if(t.id === 'fxShield'){ S.fx.shield = !S.fx.shield; refresh(); save(); return; }
+  if(t.id === 'bfsChip'){ S.ui.bfs = !S.ui.bfs; refreshTray(); save(); return; }
+  if(t.id === 'btnShort'){ shortRest(); return; }
+  if(t.id === 'btnLong'){ longRest(); return; }
+  if(t.id === 'btnEdit'){ toggleEdit(); return; }
+  if(t.id === 'btnLog'){ $('#logPanel').classList.toggle('open'); return; }
+  if(t.id === 'logClose'){ $('#logPanel').classList.remove('open'); return; }
+  if(t.id === 'logClear'){ LOG = []; try{ sessionStorage.removeItem('nyx-log'); }catch{} renderLog(); return; }
+  if(t.id === 'btnMenu'){ $('#themeName').textContent = S.ui.theme; $('#menu').showModal(); return; }
+
+  if(d.atk !== undefined){ const a = S.attacks[d.atk]; d20(a.name + ' — attack', num(String(a.bonus).replace('−','-')), 'attack', num(d.atk)); return; }
+  if(d.dmg){ const [i, j] = d.dmg.split('.').map(Number); const a = S.attacks[i]; dmgRoll(`${a.name} — ${a.dmg[j].l}`, a.dmg[j].f, /^[+−-]?\d+$/.test(String(a.bonus).trim()) ? i : null); return; }
+  if(d.cannonRoll){
+    const k = d.cannonRoll;
+    if(k === 'flame') dmgRoll(`Flamethrower (DC ${spDC()} Dex)`, '2d8');
+    else if(k === 'ballista-atk') d20('Force Ballista — attack', num(ballistaBonus().replace('−','-')), 'attack');
+    else if(k === 'ballista-dmg') dmgRoll('Force Ballista — force', '2d8');
+    else if(k === 'protect') dmgRoll('Protector — temp HP', '1d8+int');
+    return;
+  }
+  if(d.cannon){ S.cannon.hp = Math.min(num(S.cannon.max), Math.max(0, num(S.cannon.hp) + num(d.cannon))); bindAll(); save(); return; }
+  if(d.res){ const [i, k] = d.res.split('.').map(Number); const r = S.res[i]; const left = Math.max(0, resMax(r) - num(r.used)); r.used = k < left ? resMax(r) - k : resMax(r) - k - 1; r.used = Math.max(0, Math.min(resMax(r), r.used)); renderResources(); save(); return; }
+  if(d.cond){ S.conds[d.cond] = !S.conds[d.cond]; renderConds(); save(); return; }
+  if(d.exh){ S.exh = Math.max(0, Math.min(6, S.exh + num(d.exh))); refresh(); save(); return; }
+  if(t.id === 'concEnd'){ S.conc = ''; bindAll(); save(); return; }
+  if(t.id === 'concSave'){ d20('Concentration (Con save)', saveB('con'), 'save'); return; }
+
+  if(d.prof){
+    const k = d.prof; const max = k.startsWith('skill:') ? 2 : 1;
+    S.prof[k] = ((S.prof[k] || 0) + 1) % (max + 1); refresh(); save(); return;
+  }
+  if(d.toolprof !== undefined){ const T = S.tools[d.toolprof]; T.p = T.p ? 0 : 1; renderTools(); refresh(); save(); return; }
+  if(d.armor){ S.armorTrain[d.armor] = S.armorTrain[d.armor] ? 0 : 1; renderTraining(); save(); return; }
+
+  if(d.slot){ const [l, k] = d.slot.split('.').map(Number); const s = S.slots[l]; const left = num(s.t) - num(s.u); s.u = k < left ? num(s.t) - k : num(s.t) - k - 1; s.u = Math.max(0, Math.min(num(s.t), s.u)); renderSlots(); save(); return; }
+  if(d.cast){
+    const [g, i] = d.cast.split('.').map(Number); const sp = S.spellGroups[g].spells[i];
+    if(num(sp.lvl) > 0){
+      const used = spendSlot(num(sp.lvl));
+      if(!used){ say(`No slots left for ${sp.name}`, 'Try a ritual, a scroll, or a rest.'); return; }
+      renderSlots();
+      say(`${sp.name} cast`, `Level ${used} slot spent${used > sp.lvl ? ' (upcast)' : ''}.`);
+    }
+    if(sp.fx === 'shield'){ S.fx.shield = true; refresh(); }
+    if(sp.c){ S.conc = sp.name; bindAll(); }
+    save(); return;
+  }
+  if(d.ritual){ const [g, i] = d.ritual.split('.').map(Number); const sp = S.spellGroups[g].spells[i]; if(sp.c){ S.conc = sp.name; bindAll(); } say(`${sp.name} (ritual)`, 'Takes 10 extra minutes; no slot spent.'); save(); return; }
+  if(d.spellAtk){ const [g, i] = d.spellAtk.split('.').map(Number); d20(S.spellGroups[g].spells[i].name + ' — attack', spAtk(), 'attack'); return; }
+  if(d.spellDice){ const [g, i] = d.spellDice.split('.').map(Number); const sp = S.spellGroups[g].spells[i]; dmgRoll(sp.name, sp.dice); return; }
+
+  if(d.use){ const it = S.items[d.use]; if(num(it.q) < 1) return; it.q = num(it.q) - 1; const r = rollExpr(it.dice); if(r){ toast({label: it.n, total: r.total, detail: r.detail}); } renderItems(); save(); return; }
+  if(d.qty){ const [i, dl] = d.qty.split('.'); const it = S.items[i]; it.q = Math.max(0, num(it.q) + num(dl)); renderItems(); save(); return; }
+  if(d.coin){ const [k, dl] = d.coin.split('.'); S.coins[k] = Math.max(0, num(S.coins[k]) + num(dl)); renderCoins(); refresh(); save(); return; }
+  if(d.attune !== undefined){ S.attune[d.attune].on = !S.attune[d.attune].on; renderAttune(); save(); return; }
+
+  /* edit-mode structural changes */
+  if(d.del){
+    const ks = d.del.split('.'); const idx = ks.pop(); const arr = getPath(S, ks.join('.'));
+    if(Array.isArray(arr)){ arr.splice(num(idx), 1); renderAll(); save(); }
+    return;
+  }
+  if(d.add){ const arr = getPath(S, d.add); arr.push({l:'',f:''}); renderAll(); save(); return; }
+  if(d.addspell !== undefined){ S.spellGroups[d.addspell].spells.push({lvl:1,name:'New spell',time:'A',range:'',notes:''}); renderAll(); save(); return; }
+  if(d.addfeat){ S.features[d.addfeat].push({n:'New feature',t:''}); renderAll(); save(); return; }
+  if(t.id === 'addAtk'){ S.attacks.push({name:'New attack',bonus:'+0',notes:'',dmg:[{l:'Damage',f:'1d6'}]}); renderAll(); save(); return; }
+  if(t.id === 'addRes'){ S.res.push({id:'r' + Date.now(), name:'New tracker', max:1, used:0, reset:'long', note:''}); renderAll(); save(); return; }
+  if(t.id === 'addSpell'){ S.spellGroups[S.spellGroups.length - 1].spells.push({lvl:1,name:'New spell',time:'A',range:'',notes:''}); renderAll(); save(); return; }
+  if(t.id === 'addGroup'){ S.spellGroups.push({name:'New group', spells:[]}); renderAll(); save(); return; }
+  if(t.id === 'addTool'){ S.tools.push({n:'New tool',a:'int',p:1,i:0,b:0}); renderAll(); save(); return; }
+  if(t.id === 'addItem'){ S.items.push({n:'New item',q:1,note:'',dice:''}); renderAll(); save(); return; }
+
+  /* menu */
+  if(t.id === 'mClose'){ $('#menu').close(); return; }
+  if(t.id === 'mTheme'){ const order = ['auto','dark','light']; S.ui.theme = order[(order.indexOf(S.ui.theme) + 1) % 3]; applyTheme(); $('#themeName').textContent = S.ui.theme; save(); return; }
+  if(t.id === 'mPrint'){ $('#menu').close(); setTimeout(() => window.print(), 100); return; }
+  if(t.id === 'mExport'){ download(`${slug()}-data.json`, JSON.stringify({...S, savedAt: Date.now()}, null, 2), 'application/json'); return; }
+  if(t.id === 'mImport'){ $('#fileIn').click(); return; }
+  if(t.id === 'mHtml'){
+    S.savedAt = Date.now();
+    const json = JSON.stringify(S).replace(/</g, '\\u003c');
+    const html = PRISTINE.replace(/(<script id="saved-data" type="application\/json">)[\s\S]*?(<\/script>)/, (_, a, b) => a + json + b);
+    download(`${slug()}.html`, html, 'text/html'); return;
+  }
+  if(t.id === 'mReset'){
+    if(confirm('Reset everything to the original character sheet? Your changes will be lost (export first if unsure).')){
+      S = clone(DEFAULT); try{ localStorage.removeItem(KEY); }catch{} $('#menu').close(); applyTheme(); setTab('combat'); renderAll(); say('Sheet reset');
+    }
+    return;
+  }
+});
+$('#fileIn').addEventListener('change', e => {
+  const f = e.target.files[0]; if(!f) return;
+  f.text().then(txt => { try{ S = merge(clone(DEFAULT), JSON.parse(txt)); save(); $('#menu').close(); applyTheme(); renderAll(); setTab(S.ui.tab); say('Sheet imported'); }catch{ alert('That file could not be read as a sheet.'); } });
+  e.target.value = '';
+});
+$('#freeRoll').addEventListener('keydown', e => {
+  if(e.key !== 'Enter') return;
+  const v = e.target.value.trim(); if(!v) return;
+  const r = rollExpr(v); if(r){ toast({label: v, total: r.total, detail: r.detail}); } else say('Try something like 2d6+3');
+});
+$('#toast').addEventListener('click', () => $('#toast').classList.remove('show'));
+document.addEventListener('keydown', e => { if(e.key === 'Escape') $('#logPanel').classList.remove('open'); });
+$('#hpAmt').addEventListener('keydown', e => { if(e.key === 'Enter') $('[data-hp-act=dmg]').click(); });
+
+function slug(){ return (S.name || 'character').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'character'; }
+function download(name, text, type){
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], {type})); a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+
+function setTab(name){
+  S.ui.tab = name;
+  $$('.tab').forEach(t => { const on = t.dataset.tab === name; t.classList.toggle('on', on); t.setAttribute('aria-selected', on); });
+  $$('.pane').forEach(p => p.classList.toggle('on', p.id === 'pane-' + name));
+  window.scrollTo({top: 0}); save();
+}
+function toggleEdit(){
+  const on = !document.body.classList.contains('editing');
+  document.body.classList.toggle('editing', on);
+  const b = $('#btnEdit'); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); b.textContent = on ? '✓ Done' : '✎ Edit';
+  renderAll();
+  if(on) say('Edit mode', 'Change attacks, spells, features, items and trackers. Tap Done when finished.');
+}
+function applyTheme(){
+  const t = S.ui.theme; if(t === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', t);
+}
+
+/* ------------------------------------------------------------------ boot */
+applyTheme();
+renderAll();
+setTab(S.ui.tab && $('#pane-' + S.ui.tab) ? S.ui.tab : 'combat');
+$('#saveState').textContent = readLocal() ? 'saved ✓' : 'new sheet';
+window.addEventListener('beforeunload', () => { try{ S.savedAt = Date.now(); localStorage.setItem(KEY, JSON.stringify(S)); }catch{} });
+})();
+</script>
+</body>
+</html>
