@@ -705,13 +705,13 @@ const SKILL_ABIL = {}; Object.entries(SKILLS).forEach(([a, l]) => l.forEach(([k,
 const CONDITIONS = ['Blinded','Charmed','Deafened','Frightened','Grappled','Incapacitated','Invisible','Paralyzed','Petrified','Poisoned','Prone','Restrained','Stunned','Unconscious'];
 
 const DEFAULT = {
-  v:3, savedAt:0,
-  name:'Nyx', level:7, xp:'', cls:'Artificer', subclass:'Artillerist', species:'Autognome', background:'Criminal', alignment:'Neutral',
-  abil:{str:12,dex:14,con:14,int:16,wis:12,cha:8},
+  v:4, savedAt:0,
+  name:'Nyx', level:8, xp:'', cls:'Artificer', subclass:'Artillerist', species:'Autognome', background:'Criminal', alignment:'Neutral',
+  abil:{str:12,dex:14,con:14,int:18,wis:12,cha:8},
   prof:{'save:int':1,'save:con':1,'skill:arcana':1,'skill:investigation':1,'skill:sleight':1,'skill:stealth':1},
   alert:true, apt:true, speed:'30', size:'S', infCap:'',
   ac:{base:19, note:'Scale Mail 14 + Dex 2 + Shield 2 + Armor/Shield +1: 1'},
-  hp:{cur:53,max:53,temp:0}, hd:{max:7,spent:0,die:8}, death:{s:0,f:0}, insp:false,
+  hp:{cur:60,max:60,temp:0}, hd:{max:8,spent:0,die:8}, death:{s:0,f:0}, insp:false,
   fx:{shield:false}, conds:{}, exh:0, conc:'', spellBonus:0,
   ui:{mode:0,bfs:false,tab:'combat',theme:'auto'},
   attacks:[
@@ -719,7 +719,7 @@ const DEFAULT = {
     {name:'+1 Dagger', bonus:'+6', notes:'On kill, d6; if 6, d4 HP', dmg:[{l:'Piercing',f:'1d4+3'}]},
     {name:'Arcane Firearm', bonus:'', notes:'Spell focus · add to damage spells', dmg:[{l:'Add to spell',f:'1d8'}]},
     {name:'Force Ballista', bonus:'spell', notes:'Cannon’s ranged spell attack · pushes 5′', dmg:[{l:'Force',f:'2d8'}]},
-    {name:'Green Flame Blade', bonus:'+6', notes:'5′ jump, fire damage', dmg:[{l:'Extra fire',f:'1d8'},{l:'Jump target',f:'1d8+3'}]},
+    {name:'Green Flame Blade', bonus:'+6', notes:'5′ jump, fire damage', dmg:[{l:'Extra fire',f:'1d8'},{l:'Jump target',f:'1d8+int'}]},
     {name:'Booming Blade', bonus:'+6', notes:'2d8 thunder if it moves', dmg:[{l:'On hit',f:'1d8'},{l:'If it moves',f:'2d8'}]}
   ],
   cannon:{on:false,hp:15,max:15,ac:18},
@@ -774,6 +774,7 @@ const DEFAULT = {
       {n:'Protector',t:"It and everyone I choose within 10′ gain 1d8 + Int temp HP."},
       {n:'Homebrew: Observer Drone',t:'No combat abilities.'},
       {n:'Arms',t:'Torch; Grappling Hook schematic.'},
+      {n:'Ability Score Improvement',t:'Level 8: +2 Intelligence (16 → 18).'},
       {n:'Flash of Genius',t:'Level 7: reaction to add your Int modifier to an ability check or saving throw made by you or a creature within 30 feet. Uses = Int modifier per long rest.'},
       {n:'Tool Expertise',t:'Level 6: proficiency bonus is doubled on ability checks that use a tool you are proficient with.'},
       {n:'Expanded Replication',t:'Level 6: can learn plans from the Artificer level 6+ Magic Item Plans list.'},
@@ -854,6 +855,16 @@ function load(){
     }
   }
   if(pick) st.v = 3;
+  if((pick && (pick.v || 1) < 4) && num(st.level) === 7){   // level 7 -> 8: +2 Int
+    st.level = 8; st.hp.max = num(st.hp.max) + 7; st.hp.cur = num(st.hp.cur) + 7; st.hd.max = num(st.hd.max) + 1;
+    st.abil.int = Math.min(20, num(st.abil.int) + 2);
+    if(!st.features.cls.some(f => f.n === 'Ability Score Improvement')){
+      const i = Math.max(0, st.features.cls.findIndex(f => f.n === 'Flash of Genius'));
+      st.features.cls.splice(i, 0, clone(DEFAULT.features.cls.find(f => f.n === 'Ability Score Improvement')));
+    }
+  }
+  st.attacks.forEach(a => a.dmg.forEach(d => { if(a.name === 'Green Flame Blade' && d.f === '1d8+3') d.f = '1d8+int'; }));
+  if(pick) st.v = 4;
   if(pick && num(pick.spellBonus) === 2 && pick.apt === undefined){ st.spellBonus = 0; st.apt = true; }   // manual +2 -> toggle
   st.attacks.forEach(a => { if(a.name === 'Firebolt' && String(a.bonus).trim() === 'spell') a.bonus = 'cast'; });
   // 5e infusions -> 2024 replicated-item plans
